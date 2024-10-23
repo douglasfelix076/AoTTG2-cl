@@ -1,0 +1,27 @@
+extension MathX
+{
+    function Atan2(y, x)
+    {
+        if (x > 0)
+        {
+            return Math.Deg2Rad(Math.Atan(y / x));
+        }
+        elif (x < 0 && y >= 0)
+        {
+            return Math.Deg2Rad(Math.Atan(y / x)) + Math.PI;
+        }
+        elif (x < 0 && y < 0)
+        {
+            return Math.Deg2Rad(Math.Atan(y / x)) - Math.PI;
+        }
+        elif (x == 0 && y > 0)
+        {
+            return Math.PI / 2;
+        }
+        elif (x == 0 && y < 0)
+        {
+            return 0-Math.PI / 2;
+        }
+        return 0;
+    }
+}

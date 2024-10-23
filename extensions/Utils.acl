@@ -1,0 +1,70 @@
+extension Util
+{
+    function Range(x, min, max)
+    {
+        range = max - min;
+            
+        if (range == 0)
+        {
+            return min; 
+        }
+
+        while (x > max)
+        {
+            x -= range;
+        }
+
+        while (x < min)
+        {
+            x += range;
+        }
+        
+        return x;
+    }
+
+    function GetClosest(point, list, ignore)
+    {
+        if (list.Count == 1)
+        {
+            return list.Get(0);
+        }
+        if (ignore != null)
+        {
+            list.Remove(ignore);
+        }
+        maxDistance = Math.Infinity;
+        closest = null;
+        for(entity in list)
+        {
+            distance = (entity.Position - point).Magnitude;
+            if (distance < maxDistance)
+            {
+                closest = entity;
+                maxDistance = distance;
+            }
+        }
+
+        return closest;
+    }
+
+    function GetClosest(point, list)
+    {
+        if (list.Count == 1)
+        {
+            return list.Get(0);
+        }
+        maxDistance = Math.Infinity;
+        closest = null;
+        for(entity in list)
+        {
+            distance = (entity.Position - point).Magnitude;
+            if (distance < maxDistance)
+            {
+                closest = entity;
+                maxDistance = distance;
+            }
+        }
+
+        return closest;
+    }
+}

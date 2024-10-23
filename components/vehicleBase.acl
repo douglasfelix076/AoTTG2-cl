@@ -1,0 +1,73 @@
+component Vehicle
+{
+    _driver = null;
+    _collidingHuman = null;
+    _moveInput = Vector3.Zero;
+
+    function Init()
+    {
+        self.MapObject.AddSphereCollider("Region", "Characters", Vector3.Zero, 0.0);
+    }
+
+    function OnCollisionStay(other)
+    {
+        if (other.Type == "Human" && other.IsMine && self._driver == null)
+        {
+            UI.SetLabelForTime("MiddleCenter", "Press " + Input.GetKeyName("Interaction/Interact") + " to drive the vehicle.", 0.1);
+            self._collidingHuman = other;
+        }
+    }
+
+    function OnTick()
+    {
+        self._collidingHuman = null;
+    }
+
+    function OnFrame()
+    {   
+        if (self._collidingHuman != null && Input.GetKeyDown("Interaction/Interact"))
+        {
+            if (self._driver != null)
+            {
+                self._driver.Unmount();
+                self._driver = null;
+            }
+            else
+            {
+                self._driver = self._collidingHuman;
+                self._driver.MountMapObject(self.MapObject, Vector3(0, 1, 0), Vector3.Zero);
+                self._driver.ClearHooks();
+            }
+            return;
+        }
+
+        if (self._driver != null)
+        {
+            if (self._driver.CurrentAnimation != "Armature|horse_idle")
+            {
+                self._driver.PlayAnimation("Armature|horse_idle");
+            }   
+
+            steer = 0.0;
+            accel = 0.0;
+            if (Input.GetKeyHold("General/Right"))
+            {
+                steer += 1.0;
+            }
+            if (Input.GetKeyHold("General/Left"))
+            {
+                steer -= 1.0;
+            }
+            if (Input.GetKeyHold("General/Forward"))
+            {
+                accel += 1.0;
+            }
+            if (Input.GetKeyHold("General/Back"))
+            {
+                accel -= 1.0;
+            }
+
+            self._moveInput = Vector3(steer, 0, accel);
+        }
+    }
+}

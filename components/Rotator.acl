@@ -1,0 +1,17 @@
+component Rotator 
+{
+    Speed = Vector3(0,0,0);
+    Local = false;
+
+    function OnTick()
+    {
+        if (self.Local == true)
+        {
+            self.MapObject.Transform.Rotate(self.Speed * Time.TickTime);
+        }
+        else
+        {
+            self.MapObject.Rotation = self.MapObject.Rotation + self.Speed * Time.TickTime;
+        }
+    }
+}

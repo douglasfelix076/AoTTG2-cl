@@ -1,0 +1,7 @@
+component Billboard
+{
+    function OnLateFrame() 
+    {
+        self.MapObject.Forward = Camera.Forward;
+    }    
+}

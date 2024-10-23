@@ -1,0 +1,30 @@
+extension MoveX 
+{
+    coroutine MoveTo(mapobject, start, end, time, easing)
+    {
+        start = mapobject.Position;
+        t = 0.0;
+        while (t < time)
+        {
+            pos = Vector3.Lerp(start, end, Interpolation.Evaluate(t/time, easing));
+            mapobject.Position = pos;
+            t += Time.FrameTime;
+            wait 0.0;
+        }
+        mapobject.Position = end;
+    }
+
+    coroutine RotateTo(mapobject, targetrot, time, easing)
+    {
+        startRotation = mapobject.Rotation;
+        t = 0.0;
+        while (t < time)
+        {
+            newRotation = Quaternion.Slerp(Quaternion.FromEuler(startRotation), Quaternion.FromEuler(targetrot), Interpolation.Evaluate(t/time, easing)).Euler;
+            mapobject.Rotation = newRotation;
+            t += Time.FrameTime;
+            wait 0.0;
+        }
+        mapobject.Rotation = targetrot;
+    }
+}

@@ -1,0 +1,108 @@
+extension CineCamera
+{
+    coroutine EnemyAppearance(target, startDuration, duration, endDuration, outline)
+    {
+        if (outline == true)
+        {
+            target.AddOutline();
+        }
+
+        startRotation = Camera.Rotation;
+        startDist = Camera.FollowDistance;
+        endDist = startDist / 2;
+
+        time = 0;
+        while (time < startDuration)
+        {
+            Camera.LookAt(Vector3.Lerp(target.Position, target.NapePosition, 0.8));
+            endRotation = Camera.Rotation;
+            
+            rotation = Quaternion.Lerp(Quaternion.FromEuler(startRotation), Quaternion.FromEuler(endRotation), Interpolation.Evaluate(time / startDuration, "out")).Euler;
+            Camera.SetRotation(rotation);
+            Camera.FollowDistance = (Math.Lerp(startDist, endDist, Interpolation.Evaluate(time / startDuration, "out")));
+
+            time += Time.FrameTime;
+        }
+
+        time = 0;
+        while (time < duration)
+        {
+            Camera.LookAt(Vector3.Lerp(target.Position, target.NapePosition, 0.8));
+            time += Time.FrameTime;
+        }
+        
+        if (outline == true)
+        {
+            target.RemoveOutline();
+        }
+        
+        time = 0;
+        while (time < endDuration)
+        {
+            Camera.FollowDistance = (Math.Lerp(endDist, startDist, Interpolation.Evaluate(time / endDuration, "inout")));
+            time += Time.FrameTime;
+        }
+
+        Camera.FollowDistance = startDist;
+    }
+
+    coroutine MoveTo(start, end, time, easing)
+    {
+        t = 0.0;
+        while (t < time)
+        {
+            pos = Vector3.Lerp(start, end, Interpolation.Evaluate(t/time, easing));
+            Camera.SetPosition(pos);
+            t += Time.FrameTime;
+            wait 0.0;
+        }
+        Camera.SetPosition(end);
+    }
+
+    coroutine RotateTo(direction, time, easing)
+    {
+        startRotation = Camera.Rotation;
+        Camera.LookAt(Camera.Position + direction);
+        endRotation = Camera.Rotation;
+    
+        t = 0.0;
+        while (t < time)
+        {
+            newRotation = Quaternion.Lerp(Quaternion.FromEuler(startRotation), Quaternion.FromEuler(endRotation), Interpolation.Evaluate(t/time, easing)).Euler;
+            Camera.SetRotation(newRotation);
+            t += Time.FrameTime;
+            wait 0.0;
+        }
+        Camera.SetRotation(endRotation);
+    }
+
+    coroutine LookAt(point, time)
+    {
+        t = 0.0;
+        while (t < time)
+        {
+            Camera.LookAt(point);
+            t += Time.FrameTime;
+            wait 0.0;
+        }
+    }
+    
+    coroutine ZoomIn(fov, time, easing)
+    {
+        startFOV = Camera.FOV;
+        if (startFOV == 0.0)
+        {
+            startFOV = 50.0;
+        }
+
+        t = 0.0;
+        while (t < time)
+        {
+            newFOV = Math.Lerp(startFOV, fov, Interpolation.Evaluate(t/time, easing));
+            Camera.SetFOV(newFOV);
+            t += Time.FrameTime;
+            wait 0.0;
+        }
+        Camera.SetFOV(fov);
+    }
+}

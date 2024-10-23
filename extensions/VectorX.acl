@@ -1,0 +1,32 @@
+extension VectorX
+{
+    function ClampMagnitude(vector, min, max) 
+    {
+        magnitude = vector.Magnitude;
+        if (magnitude < min)
+        {
+            return vector.Normalized * min;
+        }
+        if (magnitude > max)
+        {
+            return vector.Normalized * max;
+        }
+
+        return vector;
+    }
+    
+    function EulerToDirection(euler)
+    {
+        pitch = 0-euler.X;
+        yaw = 0-euler.Y; 
+        
+        return Vector3(Math.Cos(yaw) * Math.Cos(pitch), Math.Sin(pitch), Math.Sin(yaw) * Math.Cos(pitch));
+    }
+
+    function DirectionToEuler(direction)
+    {
+        yaw = MathX.Atan2(direction.Z, direction.X) * Math.Rad2DegConstant;
+        pitch = MathX.Atan2(direction.Y, Math.Sqrt(direction.X * direction.X + direction.Z * direction.Z)) * Math.Rad2DegConstant;
+        return Vector3(pitch, yaw, 0);
+    }
+}

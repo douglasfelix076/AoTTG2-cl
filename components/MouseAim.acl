@@ -1,0 +1,7 @@
+component MouseAim
+{
+    function OnLateFrame() 
+    {
+        self.MapObject.Position = Input.GetMouseAim();
+    }    
+}
