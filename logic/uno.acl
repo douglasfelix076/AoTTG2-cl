@@ -1,0 +1,2045 @@
+# Commence epic spaghetti code
+class Main
+{
+    # TO-DO list
+    # DRAW4 CHALLENGE
+    # NO BLUFFING
+
+    ForcePlay = false;     # done
+    DrawUntilMatch = true; # done
+    SevenO = false;        # done
+    NoBluffing = false;    # TO-DO
+    #AllowStacking = false; # TO-DO?
+    #UseSpecialCards = false;
+    
+    Description = "UNO Gamemode";
+    ForcePlayTooltip = "If a matching card is drawn, automatically put it down.";
+    DrawUntilMatchTooltip = "Players will keep drawing cards until a match is found.";
+    SevenOTooltip = "7 is used as a swap hands card, 0 swap all hands with the next player.";
+    NoBluffingTooltip = "Disables wild draw challenges.";
+    #AllowStackingTooltip = "Players can keep stacking draws until someone does not have a draw card.";
+    #UseSpecialCardsTooltip = "Adds the Shuffle all and Swap hands cards to the deck.";
+
+    _StartingCards = 7;
+    _GameState = "none";
+    _MyPlayer = null;
+    _CurrentPlayer = null;
+    _NextPlayer = null;
+    _LastCard = null; # last placed card
+    _CurrentPlayerTurn = 0; # id of the current player
+    _Direction = 1; # 1 cw or -1 ccw
+    _TurnTime = 0; # timer visible on the top
+    _StartingTime = 10;
+    _TableSlam = false;
+    _WaitingInput = false;
+    _InputIndex = 0;
+
+    _UnoPlayers = List();
+    _DrawPile = List();
+    _UsedCards = List();
+    _PlacedCards = List();
+    _PlacedCardsRB = List(); # table slam cards
+    _CardPool = List();
+    _Seats = List();
+    
+    # world objects
+    _Table = null;
+    _Chair = null;
+    _Deck = null;
+    _CamPos = null;
+    _AudioPlayer = null;
+    _ChooseColor = null;
+    _TurnArrow = null;
+    _AddCounter = null;
+    _DirectionArrow = null;
+    _UIStuff = null;
+    _UI_UNO_1 = null;
+    _UI_UNO_2 = null;
+    _UnoShout = null;
+    _Background = null;
+    _DrawPosition = Vector3(0,0,0);
+    _DrawRotation = Vector3(0,0,0);
+
+    # keybinds
+    _InputKey_Left = "General/Left";
+    _InputKey_Right = "General/Right";
+    _InputKey_Up = "General/Forward";
+    _InputKey_Down = "General/Back";
+    _InputKey_Confirm = "General/Forward";
+    _InputKey_Reject = "General/Back";
+    _InputKey_Slam = "Interaction/Interact";
+    _InputKey_Special = "Interaction/Interact2";
+
+    function Init()
+    {
+        self._Table = Map.FindMapObjectByName("Table");
+        self._Chair = Map.FindMapObjectByName("Chair");
+        self._Deck = Map.FindMapObjectByName("Deck");
+        self._CamPos = Map.FindMapObjectByName("CamDefaultPos");
+        self._ChooseColor = Map.CreateMapObjectRaw("Scene,Custom/uno/ChooseColor,116,0,0,0,1,0,ChooseColor,0,3,0,0,0,0,1,1,1,None,Entities,Default,DefaultNoTint|255/255/255/255,Billboard|");
+        self._AddCounter = Map.CreateMapObjectRaw("Scene,Custom/uno/PlusNum,117,0,0,0,1,0,AddCounter,0,3,0,0,0,0,1,1,1,None,Entities,Default,DefaultNoTint|255/255/255/255,Billboard|");
+        self._TurnArrow = Map.CreateMapObjectRaw("Scene,Custom/uno/TurnArrow,118,0,0,0,1,0,TurnArrow,0,3,0,0,0,0,1,1,1,None,Entities,Default,DefaultNoTint|255/255/255/255,Rotator|Speed:0/72/0|Local:false");
+        self._AudioPlayer = Map.CreateMapObjectRaw("Scene,Custom/uno/audioplayer,19,0,1,0,1,0,audioplayer,0,100,50,0,0,0,1,1,1,None,Entities,Default,DefaultNoTint|255/255/255/255,").Transform;
+        self._DirectionArrow = Map.CreateMapObjectRaw("Scene,Custom/uno/directionarrow,120,0,0,0,1,0,DirectionArrow,0,3,0,90,0,0,1,1,1,None,Entities,Default,DefaultNoTint|255/255/255/255,Rotator|Speed:0/0/30|Local:true");
+        self._UIStuff = Map.CreateMapObjectRaw("Scene,Custom/uno/ui_objects,120,0,0,0,1,0,UIObjects,0,3,0,90,0,0,1,1,1,None,Entities,Default,DefaultNoTint|255/255/255/255,Billboard|");
+        self._UI_UNO_1 = Map.CreateMapObjectRaw("Scene,Custom/uno/ui_uno_1,121,0,0,0,1,0,ui_uno_1,0,0,0,0,0,0,1,1,1,None,Entities,Default,DefaultNoTint|255/255/255/255,");
+        self._UI_UNO_2 = Map.CreateMapObjectRaw("Scene,Custom/uno/ui_uno_2,122,0,0,0,1,0,UI_UNO_2,0,0,0,0,0,0,1,1,1,None,Entities,Default,DefaultNoTint|255/255/255/255,");
+        self._UnoShout = Map.CreateMapObjectRaw("Scene,Custom/uno/unoshout,123,0,0,0,1,0,UnoShout,0,0,0,0,0,0,1,1,1,None,Entities,Default,DefaultNoTint|255/255/255/255,");
+        self._Background = Map.FindMapObjectByID(16);
+        self._DrawPosition = self._Deck.Position + Vector3.Up * 0.045;
+        self._DrawRotation = self._Deck.Rotation;
+        
+        # initialize _DrawPile
+        for (i in Range(1, 5, 1))
+        {
+            self._DrawPile.Add(i + "0");
+        }
+        for (i in Range(1, 13, 1))
+        {
+            for (j in Range(1, 5, 1))
+            {
+                self._DrawPile.Add(j + "" + i);
+                self._DrawPile.Add(j + "" + i);
+            }
+        }
+        for (i in Range(0, 4, 1))
+        {
+            self._DrawPile.Add("013");
+            self._DrawPile.Add("014");
+        }
+        
+        ListX.Shuffle(self._DrawPile);
+
+        self.UpdateSeats();
+    }
+
+    function OnGameStart()
+    {
+        for (i in Range(0, 10, 1))
+        {
+            self._PlacedCardsRB.Add(Map.CreateMapObjectRaw("Scene,Custom/uno/basecard,8,0,0,0,1,0,basecard,0,0,0,0,0,0,1,1,1,Physical,MapObjects,Default,DefaultTiled|255/255/255/255|0/4,Rigidbody|Mass:0.03|Gravity:0/-0.15/0|FreezeRotation:false|Interpolate:false"));
+        }
+        
+        text = "Controls:" + String.Newline + 
+            "Move through cards (left/right): <color=#FFC964>" + Input.GetKeyName(self._InputKey_Left) + " " + Input.GetKeyName(self._InputKey_Right) + "</color>" + String.Newline +
+            "Play card/Confirm action: <color=#FFC964>" + Input.GetKeyName(self._InputKey_Confirm) + "</color>" + String.Newline +
+            "Reject action: <color=#FFC964>" + Input.GetKeyName(self._InputKey_Reject) + "</color>" + String.Newline +
+            "Slam the table: <color=#FFC964>" + Input.GetKeyName(self._InputKey_Slam) + "</color>" + String.Newline +
+            "Special action: <color=#FFC964>" + Input.GetKeyName(self._InputKey_Special) + "</color>";
+        UI.SetLabel("BottomRight", text);
+    }
+
+    function OnTick()
+    {
+        if (self._GameState == "none")
+        {
+            if (Game.PlayerHumans.Count < 2)
+            {
+                UI.SetLabelForTime("TopCenter", "Waiting for players...", 0.1);
+                self._StartingTime = 10;
+            }
+            else
+            {
+
+                UI.SetLabelForTime("TopCenter", "Game starting in " + Math.Round(self._StartingTime), 0.1);
+                self._StartingTime -= Time.FrameTime;
+                if (self._StartingTime <= 0 && Network.IsMasterClient == true)
+                {
+                    # Initial card
+                    index = Random.RandomInt(0, Game.PlayerHumans.Count);
+                    c = Random.RandomInt(1, 5) + "" + Random.RandomInt(0, 10);
+                    self._DrawPile.Remove(c);
+                    self._UsedCards.Add(c);
+
+                    Network.SendMessageAll("GameStartRPC|" + index + "/" + c);
+                }
+            }
+        }
+        elif (self._GameState == "start")
+        {
+
+        }
+        elif (self._GameState == "inprogress")
+        {
+            text = "";
+
+            for (player in self._UnoPlayers)
+            {
+                text += "[" + player.NetworkPlayer.ID + "] NeedShout: " + player._NeedShout + " | HasShouted: " + player._HasShouted + String.Newline;
+            }
+
+            #UI.SetLabelForTime("MiddleRight", text, 0.1);
+
+            if (self._LastCard != null && self._LastCard.ColorID != 0)
+            {
+                col = ColorX.Lerp(self._Background.Color, self._LastCard.MapObject.Color, 1 * Time.TickTime);
+                self._Background.SetColorAll(ColorX.Lerp(self._Background.Color, self._LastCard.MapObject.Color, 1 * Time.TickTime));
+            }
+
+            player = self._CurrentPlayer;
+
+            text = "<size=50>Your turn.</size>";
+            if (player != self._MyPlayer)
+            {
+                text = "<size=50>" + player.NetworkPlayer.Name + "'s turn.</size>";
+            }
+
+            self._TurnTime -= Time.TickTime;
+            
+            if (self._TurnTime >= 0)
+            {
+                if (self._TurnTime > 0 && self._TurnTime <= 10)
+                {
+                    text = text + String.Newline + "(" + Math.Ceil(self._TurnTime) + ")";
+                }
+                elif (self._TurnTime <= 0 && player == self._MyPlayer) # did not play
+                {
+                    #self._TurnTime = 0-1;
+                    #player.DrawCardRPC(1, true);
+                    #self.NextTurnRPC("");
+                }
+            }
+            else
+            {
+                # if for whatever reason the current player takes way too long to go to the next turn
+                # then the masterclient forces the next round and removes the player from the game
+                # this is just incase something breaks and the turn is frozen or something like that
+                if (self._TurnTime + 20 > 0 && self._TurnTime + 20 <= 10)
+                {
+                    text = text + String.Newline + "<color=red><size=30>(" + Math.Ceil(self._TurnTime + 20) + ")</size></color>";
+                }
+                elif (self._TurnTime + 20 <= 0 && Network.IsMasterClient == true)
+                {
+                    self.NextTurnRPC("");
+                    self._CurrentPlayer.ForceRemove();
+                }
+            }
+
+            UI.SetLabelForTime("TopCenter", text, 0.1);
+                
+            if (player != null)
+            {
+                self._TurnArrow.Position = Vector3.Lerp(self._TurnArrow.Position, player.Human.Position + Vector3.Up * 1.55, 15 * Time.TickTime);
+            }
+        }
+        elif (self._GameState == "end")
+        {
+            
+        }
+    }
+
+    function OnFrame()
+    {
+        if (self._GameState != "none")
+        {
+            self.GetInput();
+        }
+    }
+
+    function OnLateFrame()
+    {
+        self._Background.Position = Camera.Position;
+    }
+
+    function OnSecond() 
+    {
+        if (Network.MyPlayer.Status == "Dead")
+        {
+            Game.SpawnPlayer(Network.MyPlayer, false);
+        }
+        elif (Network.MyPlayer.Status == "Spectating" || self._GameState == "inprogress")
+        {
+            # just in case the distance resets when the player change any general setting
+            Camera.FollowDistance = 0.0;
+        }
+    }
+
+    function OnCharacterSpawn(character)
+    {
+        if (character.IsMainCharacter == true)
+        {
+            Camera.SetManual(false);
+        }
+        
+        if (character.Type == "Human")
+        {
+            # disable everything ><((º>
+            character.DisablePerks();
+            character.SetSpecial("None");
+            character.InvincibleTimeLeft = 9999999.0;
+            character.IsInvincible = true;
+            character.LeftHookEnabled = false;
+            character.RightHookEnabled = false;
+            character.CanDodge = false;
+            character.MaxGas = 0.0;
+            character.CurrentGas = 0.0;
+            character.CurrentBlade = 0;
+            character.CurrentAmmoLeft = 0;
+            character.CurrentAmmoRound = 0;
+        }
+    }
+
+    function OnPlayerJoin(player)
+    {
+    }
+    
+    function OnNetworkMessage(sender, message) 
+    {
+        #Game.Print("<color=white>(" + sender.ID + ") RPC:</color> <color=green>" + message + "</color>");
+
+        split = String.Split(message, "|");
+        
+        if (split.Count < 1)
+        {
+            return;
+        }
+
+        call = split.Get(0);
+        args = "";
+
+        if (split.Count > 1)
+        {
+            args = String.Split(split.Get(1), "/");
+        }
+
+        if (call == "TableSlamRPC")
+        {
+            if (self._TableSlam == false)
+            {
+                viewID = Convert.ToInt(args.Get(0));
+                self.Slam(Game.FindCharacterByViewID(viewID));
+            }
+        }
+        elif (call == "SetTurnRPC")
+        {
+            index = Convert.ToInt(args.Get(0));
+            info = args.Get(1);
+            self.SetPlayerTurn(index, info);
+        }
+        elif (call == "SetWildColorRPC")
+        {
+            colorID = Convert.ToInt(args.Get(0));
+            self._LastCard.ColorID = colorID;
+            self._LastCard.UpdateVisual(true);
+        }
+        elif (call == "StartChallengeRPC")
+        {
+            self.ChallengeSequence(self._CurrentPlayer, self._NextPlayer);
+        }
+        elif (call == "SwitchCardsRPC")
+        {
+            index1 = Convert.ToInt(args.Get(0));
+            index2 = Convert.ToInt(args.Get(1));
+            self.SwitchCards(self._UnoPlayers.Get(index1), self._UnoPlayers.Get(index2));
+        }
+        elif (call == "GameStartRPC")
+        {
+            index = Convert.ToInt(args.Get(0));
+            c = args.Get(1);
+            self.StartGameSequence(index, c);
+        }
+    }
+    
+    function SetupPlayers() 
+    {
+        for (human in Game.PlayerHumans)
+        {
+            self.AddSeat();
+        }   
+        self.UpdateSeats();
+        
+        index = 0;
+        # the order might be different if i were to loop through Game.PlayerHumans instead
+        # since Player 2 could spawn before Player 1
+        for (i in Range(0, Network.Players.Count, 1))
+        {
+            player = Network.Players.Get(i);
+            if (player.Status == "Alive" && player.CharacterType == "Human")
+            {
+                self.SetupPlayer(player.Character, index);
+                index += 1;
+            }
+        }
+    }
+
+    coroutine SetupPlayer(human, index)
+    {
+        mapObject = Map.CreateMapObjectRaw("Scene,None,31,0,1,1,1,1,UnoPlayer,0.0,0.0,0.0,0,0,0,1,1,1,Physical,Entities,Default,Default|255/255/255/255,UnoPlayer|IsMine:false,");
+        newPlayer = mapObject.GetComponent("UnoPlayer");
+        newPlayer.Setup(human);
+
+        self._UnoPlayers.Add(newPlayer);
+
+        if (human.IsMine)
+        {
+            self._MyPlayer = newPlayer;
+            seat = self._Seats.Get(index);
+            human.Forward = seat.Forward;
+            self._UI_UNO_1.Parent = newPlayer.UITransform;
+            self._UI_UNO_2.Parent = newPlayer.UITransform;
+
+            wait 0.0;
+            human.MountMapObject(seat, Vector3.Zero, Vector3.Zero);
+            human.PlayAnimation("Armature|horse_idle");
+            Camera.FollowDistance = 0.0;
+            Camera.SetFOV(70);
+            Camera.SetRotation(seat.Rotation + Vector3(15, 0, 0));
+
+            pos = Vector3(0.55, 0-0.1, 0);
+            self._UI_UNO_1.LocalPosition = pos;
+            self._UI_UNO_2.LocalPosition = pos;
+        }
+    }
+    
+    function RemovePlayer(player)
+    {
+        player.Human = null;
+        player.NetworkPlayer = null;
+
+        self.RemoveSeat(player);
+        self._UnoPlayers.Remove(player);
+
+        if (Network.IsMasterClient == true)
+        {
+            if (self._LastCard.ColorID == 0)
+            {
+                self.SetWildColorRPC(Random.RandomInt(1, 5));
+            }
+            self.NextTurnRPC("");
+        }
+
+        for (card in player.MyCards)
+        {
+            card.MapObject.Active = false;
+            card.MapObject.Parent = null;
+        }
+
+        Map.DestroyMapObject(player.UITransform, false);
+        Map.DestroyMapObject(player.MapObject, true);
+    }
+    
+    function GetInput()
+    {
+        player = self._MyPlayer;
+
+        if (player == null)
+        {
+            return;
+        }
+        
+        if (Input.GetKeyDown(self._InputKey_Slam) && self._TableSlam == false)
+        {
+            Network.SendMessageAll("TableSlamRPC|" + player.Human.ViewID);
+        }
+    
+        if (self._GameState == "inprogress")
+        {
+            if (self._CurrentPlayer == player)
+            {
+                if (Input.GetKeyDown(self._InputKey_Left))
+                {
+                    player.NextCard(true);
+                }
+                if (Input.GetKeyDown(self._InputKey_Right))
+                {
+                    player.NextCard(false);
+                }
+                if (Input.GetKeyDown(self._InputKey_Confirm))
+                {
+                    player.PlaceCardRPC();
+                }
+            }
+            
+            if (Input.GetKeyDown(self._InputKey_Special))
+            {
+                player.ShoutRPC();
+            }
+        }
+    }
+
+    function GetPlayer(index)
+    {
+        index = Math.Mod(index, self._UnoPlayers.Count);
+        return self._UnoPlayers.Get(index);
+    }
+
+    coroutine StartGameSequence(index, c)
+    {
+        if (Network.MyPlayer.Status == "Dead" || Network.MyPlayer.Status == "Spectating")
+        {
+            Camera.SetManual(true);
+            Camera.SetPosition(self._CamPos.Position);
+            Camera.LookAt(self._Table.Position);
+            Camera.SetManual(false);
+        }
+
+        self._GameState = "start";
+        self.SetupPlayers();
+        
+        wait 1.0;
+        
+        if (Network.IsMasterClient == true)
+        {
+            for (player in self._UnoPlayers)
+            {
+                player.MasterDrawCardRPC(self._StartingCards, true);
+            }
+        }
+        
+        wait 1.0;
+        
+        card = UnoCard(self.GetCard(), c, true);
+
+        self.PlaceCardSequence(card, null);
+        self.SetPlayerTurn(index, "");
+        self._GameState = "inprogress";
+        self._DirectionArrow.Position = Vector3(0, 0.5501, 0);
+        self._TurnArrow.Position = Vector3.Up * 10;
+        self._DirectionArrow.Active = true;
+        self._TurnArrow.Active = true;
+        
+        #Time.TimeScale = 0.1;
+        
+    }
+
+    function GetCardFromPile()
+    {
+        if (self._DrawPile.Count == 0)
+        {
+            self._DrawPile = self._UsedCards;
+            self._UsedCards = List();
+            ListX.Shuffle(self._DrawPile);
+        }
+        
+        c = null;
+        
+        # if _DrawPile is still empty then the players are holding all cards
+        if (self._DrawPile.Count > 0)
+        {
+            c = ListX.Random(self._DrawPile);
+            self._DrawPile.Remove(c);
+        }
+        
+        return c;
+    }
+
+    coroutine PlaceCardSequence(card, player)
+    {
+        self._LastCard = card;
+
+        # visual
+        self._PlacedCards.Add(card);
+        if (self._PlacedCards.Count > 10)
+        {
+            self._PlacedCards.Get(0).MapObject.Active = false;
+            self._PlacedCards.RemoveAt(0);
+        }
+        
+        card.MapObject.Parent = null;
+        
+        time = 0.4;
+        MoveX.MoveTo(card.MapObject, card.MapObject.Position, self._Table.Position + Vector3.Up * 0.061, time, "out");
+        MoveX.RotateTo(card.MapObject, card.MapObject.Rotation, Vector3(90, Random.RandomFloat(0, 360), 0), time * 0.9, "out");
+        
+        wait time;
+
+        for (i in Range(0, self._PlacedCards.Count - 1, 1))
+        {
+            c = self._PlacedCards.Get(i).MapObject;
+            c.Position = self._Table.Position + Vector3.Up * (0.061 - (self._PlacedCards.Count - i - 1) * 0.001);
+        }
+
+        if (player != null)
+        {
+            self.OnCardPlaced(card, player);
+        }
+    }
+
+    coroutine DrawCardSequence(card, player, ignoreOnDraw)
+    {
+        # visual
+        time = 0.4;
+
+        pos = Vector3(0.5, 0-0.2, 0);
+        rot = Vector3(0, 0-5.0, 0);
+        MoveX.MoveToParent(card.MapObject, player.UITransform, self._DrawPosition, pos, time, "out");
+        MoveX.RotateToParent(card.MapObject, player.UITransform, self._DrawRotation + Vector3(0-90, 0-90, 0), rot, time, "in");
+
+        wait time;
+
+        player.UpdateCardPositions();
+        
+        if (ignoreOnDraw == false)
+        {   
+            self._TurnTime = 20.0;
+            self.OnCardDraw(card, player);
+        }
+    }
+
+    coroutine ChallengeSequence(drawPlayer, challenger)
+    {
+        # challenge icon
+        
+        wait 2.0;
+        
+        hasMatching = drawPlayer.HasCardOfColor(self._LastCard.ColorID);
+        
+        # win/lose icon
+        
+        wait 1.0;
+
+        if (hasMatching == true)
+        {
+            if (drawPlayer == self)
+            {
+                drawPlayer.DrawCardRPC(4);
+            }
+        }
+        elif (true)
+        {
+            if (challenger == self)
+            {
+                challenger.DrawCardRPC(6);
+            }
+        }
+
+        wait 1.0;
+
+        # next turn
+    }
+
+    function SwitchCards(player1, player2)
+    {
+        temp = player1.MyCards;
+        player1.MyCards = player2.MyCards;
+        player2.MyCards = temp;
+
+        for (card in player1.MyCards)
+        {
+            card.MapObject.Parent = player1.UITransform;
+        }
+
+        for (card in player2.MyCards)
+        {
+            card.MapObject.Parent = player2.UITransform;
+        }
+
+        player1.UpdateCardPositions();
+        player2.UpdateCardPositions();
+
+        if (self._MyPlayer != null)
+        {
+            player1.RevealAllCards(false);
+            player2.RevealAllCards(false);
+            if (player1 == self._MyPlayer || player2 == self._MyPlayer)
+            {
+                self._MyPlayer.SelectedIndex = 0;
+                self._MyPlayer.RevealAllCards(true);
+            }
+        }
+        else
+        {
+            player1.RevealAllCards(true);
+            player2.RevealAllCards(true);
+        }
+        
+    }
+
+    function CycleCards()
+    {
+        allCards = List();
+        for (i in Range(0, self._UnoPlayers.Count, 1))
+        {
+            current = self._UnoPlayers.Get(i);
+            current.RevealAllCards(false);
+            allCards.Add(current.MyCards);
+        }
+
+        for (i in Range(0, allCards.Count, 1))
+        {
+            current = self._UnoPlayers.Get(i);
+            hand = allCards.Get(Math.Mod(i - self._Direction, allCards.Count));
+            
+            current.MyCards = hand;
+            for (j in Range(0, hand.Count, 1))
+            {
+                card = hand.Get(j);
+                card.MapObject.Parent = current.UITransform;
+            }
+
+            current.UpdateCardPositions();
+        }
+
+        self._MyPlayer.RevealAllCards(true);
+    }
+    
+    # returns a index from 1 to keys.count, returns 0 if no key was pressed and the timer ran out
+    coroutine WaitForInput(text, inputKeys)
+    {
+        self._WaitingInput = true;
+        self._InputIndex = 0;
+        keys = String.Split(inputKeys, ",");
+
+        wait 0.1;
+
+        self._TurnTime = 99; # set a high number just so the timer doesn't show 
+        startTime = Time.GameTime;
+        time = 20;
+        while (time > 0)
+        {
+            timer = "";
+            if (time <= 10 && time >= 0)
+            {
+                timer = String.Newline + "(" + Math.Ceil(time) + ")";
+            }
+
+            UI.SetLabelForTime("MiddleCenter", text + timer, 0.1);
+            
+            # input needs to be separated so the loop doesnt run inside the coroutine
+            self._InputIndex = self.Input(keys);
+            if (self._InputIndex != 0)
+            {
+                time = 0;
+            }
+            time -= Time.FrameTime;
+        }
+
+        wait 0.05;
+
+        self._WaitingInput = false;
+    }
+    
+    function Input(keys)
+    {
+        for (i in Range(0, keys.Count, 1))
+        {
+            key = keys.Get(i);
+            if (Input.GetKeyDown(key))
+            {
+                return i+1;
+            }
+        }
+        return 0;
+    }
+
+    function GetCard()
+    {
+        for (card in self._CardPool)
+        {
+            if (card.Active == false)
+            {
+                card.Active = true;
+                card.Position = self._DrawPosition;
+                return card;
+            }
+        }
+        new = Map.CreateMapObjectRaw("Scene,Custom/uno/basecard,8,0,1,0,1,0,basecard,0,0,0,0,0,0,1,1,1,None,Entities,Default,DefaultTiled|255/255/255/255|0/4,");
+        new.Position = self._DrawPosition;
+        self._CardPool.Add(new);
+        return new;
+    }
+
+    function AddSeat()
+    {
+        obj = Map.CopyMapObject(self._Chair, true);
+        obj.Active = true;
+        self._Seats.Add(obj);
+    }
+
+    function RemoveSeat(player)
+    {
+        s = self._Seats.Get(ListX.IndexOf(self._UnoPlayers, player));
+        self._Seats.Remove(s);
+        Map.DestroyMapObject(s, true);
+
+        self.UpdateSeats();
+    }
+
+    function UpdateSeats()
+    {
+        for (i in Range(0, self._Seats.Count, 1))
+        {
+            seat = self._Seats.Get(i);
+
+            a = 360 / self._Seats.Count * i;
+            dist = 1.25;
+            pos = Vector3(Math.Cos(a) * dist, 0.25, Math.Sin(a) * dist);
+            rot = Vector3(0, 0 - a - 90, 0);
+            seat.Position = pos;
+            seat.Rotation = rot;
+        }
+    }
+    
+    function ChooseColorAnimation(c)
+    {
+        self._ChooseColor.Transform.PlayAnimation("Color_" + c);
+    }
+
+    function SetPlayerTurn(index, info)
+    {
+        if (self._CurrentPlayer != null && self._CurrentPlayer._NeedShout == true)
+        {
+            self._CurrentPlayer._NeedShout = false;
+            self._CurrentPlayer._HasShouted = false;
+            self.SetShoutIcon(0);
+        }
+
+        self._TurnTime = 20.0;
+        self._CurrentPlayerTurn = index;
+        self._CurrentPlayer = self.GetPlayer(index);
+        self._NextPlayer = self.GetPlayer(Math.Mod(index + self._Direction, self._UnoPlayers.Count));
+        
+        if (info == "block")
+        {
+            self.SetUIObject(self._CurrentPlayer.Human.Position + self._CurrentPlayer.Human.Forward * 0.45 + Vector3.Up * 0.8, "Block");
+        }
+        if (String.StartsWith(info, "draw") == true)
+        {
+            #hasMatching = player.HasCardOfType();
+            MoveX.MoveTo(self._AddCounter, self._AddCounter.Position, self._CurrentPlayer.Human.Position + self._CurrentPlayer.Human.Forward * 0.6 + Vector3.Up, 0.5, "inout");
+            self._AddCounter.Position = Vector3.Up;
+            self._AddCounter.Active = true;
+        }
+        else
+        {
+            self._AddCounter.Active = false;
+        }
+
+        self.OnNextTurn(info, self._CurrentPlayer);
+    }
+
+    coroutine OnNextTurn(info, player)
+    {
+        if (player == self._MyPlayer)
+        {
+            self.PlaySound("myturn");
+
+            wait 1.0;
+            
+            if (String.StartsWith(info, "draw") == true)
+            {
+                #info2 = "draw4,+12";
+                if (self.NoBluffing == true)
+                {
+                    draw = Convert.ToInt(String.Substring(info, 4));
+                    self._MyPlayer.DrawCardRPC(draw, true);
+                    wait 1.0;
+                    self.NextTurnRPC("");
+                }
+                elif (true)
+                {
+                    
+                    self.WaitForInput(
+                        "<size=50><color=#FFC964>" + Input.GetKeyName(self._InputKey_Confirm) + "</color>: Challenge" + String.Newline +
+                        "<color=#FFC964>" + Input.GetKeyName(self._InputKey_Reject) + "</color>: Decline</size>",
+                        self._InputKey_Confirm+","+self._InputKey_Reject);
+
+                    while (self._WaitingInput == true)
+                    {
+                        # hold until player clicks something 
+                    }
+
+                    if (self._InputIndex == 1)
+                    {
+                        #self.StartChallenge();
+                    }
+                    elif (true)
+                    {
+                        self._MyPlayer.DrawCardRPC(4, true);
+                        wait 1.0;
+                        self.NextTurnRPC("");
+                    }
+                }
+                wait 1.0;
+                
+                self.NextTurnRPC("");
+            }
+            elif (info == "block")
+            {
+                self.PlaySound("block");
+                self.NextTurnRPC("");
+            }
+            elif (info == "skip")
+            {
+                self.NextTurnRPC("");
+            }
+            elif (true)
+            {
+                if (self._MyPlayer.HasMatch() == true)
+                {
+                    self._MyPlayer.CanPlay = true;
+                    if (self._MyPlayer.MyCards.Count == 2)
+                    {
+                        self._MyPlayer._NeedShout = true;
+                        self._MyPlayer._HasShouted = false;
+                        self.SetShoutIcon(1);
+                    }
+                }
+                elif (true)
+                {
+                    self._MyPlayer.CanPlay = false;
+                    #Game.Print("<color=red>Has no matches! drawing a card...</color>");
+                    #wait 1.0;
+                    self._MyPlayer.DrawCardRPC(1, false);
+                }
+            }
+        }
+    }
+
+    coroutine OnCardPlaced(card, player) 
+    {
+        info = "";
+        wild = false;
+        draw = 0;
+
+        if (card.Index == 0 && self.SevenO == true)
+        {
+            self.CycleCards();
+            wait 1.0;
+        }
+        if (card.Index == 7 && self.SevenO == true)
+        {
+            if (self._UnoPlayers.Count > 2)
+            {
+                self._TurnTime = 20.0;
+                
+                if (player == self._MyPlayer)
+                {
+                    chooseHuman = null;
+                    selectedHuman = null;
+
+                    while (chooseHuman == null && self._TurnTime > 0)
+                    {
+                        aim = Input.GetMouseAim();
+                        character = Physics.SphereCast(Camera.Position + (aim - Camera.Position).Normalized * 0.5, aim, 0.1, "Characters");
+                        if (character != null && character.Type == "Human" && character != self._MyPlayer.Human)
+                        {
+                            if (selectedHuman != character)
+                            {
+                                if (selectedHuman != null)
+                                {
+                                    selectedHuman.RemoveOutline();
+                                }
+                                selectedHuman = character;
+                                character.AddOutline(Color(255,255,255), "OutlineAll");
+                                UI.SetLabel("MiddleLeft", "ID: " + selectedHuman.Player.ID);
+                            }
+                            if (selectedHuman != null && Input.GetKeyDown(self._InputKey_Confirm))
+                            {
+                                chooseHuman = selectedHuman;
+                            }
+                        }
+                        elif (selectedHuman != null)
+                        {
+                            UI.SetLabel("MiddleLeft", "none");
+                            selectedHuman.RemoveOutline();
+                            selectedHuman = null;
+                        }
+                    }
+                    index = 0;
+                    if (chooseHuman == null) # null means the timer ran out
+                    {
+                        index = Random.RandomInt(0, self._UnoPlayers.Count);
+                    }
+                    elif (true)
+                    {
+                        index = self.GetIndexOfHuman(chooseHuman);
+                    }
+                    self.SwitchCardsRPC(index);
+                }   
+            }
+            elif (true)
+            {
+                self.SwitchCards(self._UnoPlayers.Get(0), self._UnoPlayers.Get(1));
+                wait 1.0;
+            }
+        }
+        elif (card.Index == 10) # block
+        {
+            info = "block";
+        }
+        elif (card.Index == 11) # reverse
+        {
+            if (self._UnoPlayers.Count == 2)
+            {
+                info = "skip";
+            }
+            self._Direction = 0-self._Direction;
+            self._DirectionArrow.LocalRotation = self._DirectionArrow.LocalRotation + Vector3.Left * 180;
+            self.SetUIObject(Vector3.Up, "Reverse");
+        }
+        elif (card.Index == 12) # +2
+        {
+            draw = 2;
+        }
+        elif (card.Index == 13) # +4
+        {
+            wild = true;
+            draw = 4;
+        }
+        elif (card.Index == 14) # wild
+        {
+            wild = true;
+        }
+        if (draw > 0)
+        {
+            self._AddCounter.TextureOffsetX = draw;
+            self._AddCounter.Position = Vector3.Up * 0.7;
+            
+            /*
+            if (self.AllowStacking == true)
+            {
+                #info += "stack" + draw + ",";
+            }
+            */
+            info = "draw" + draw;
+        }
+        if (wild == true)
+        {
+            self._TurnTime = 20;
+
+            if (player == self._MyPlayer)
+            {
+                self.ChooseColorAnimation(0);
+                self._ChooseColor.Active = true;
+                self._ChooseColor.Position = Vector3.Up * 1.1;
+                
+                self.WaitForInput("<size=50>Choose a color.</size>", self._InputKey_Right+","+self._InputKey_Up+","+self._InputKey_Left+","+self._InputKey_Down);
+
+                while (self._WaitingInput == true)
+                {
+                    # hold until player clicks something 
+                }
+
+                self.PlaySound("pip");
+                c = self._InputIndex;
+                if (c == 0)
+                {
+                    c = Random.RandomInt(1, 5);
+                }
+
+                self.ChooseColorAnimation(c);
+                UI.SetLabel("MiddleCenter", "");
+
+                wait 1.0;
+
+                self.SetWildColorRPC(c);
+                self._ChooseColor.Active = false;
+            }
+        }
+        if (Network.IsMasterClient)
+        {
+            self._UsedCards.Add("" + card.ColorID + card.Index);
+        }
+        if (player == self._MyPlayer)
+        {
+            self.NextTurnRPC(info);
+        }
+    }
+    
+    coroutine OnCardDraw(card, player)
+    {
+        if (player == self._MyPlayer)
+        {
+            player.CanPlay = false;
+
+            if (card.IsMatch(self._LastCard))
+            {
+                if (self.ForcePlay == true)
+                {
+                    player.CanPlay = true;
+                    player.PlaceCardRPC();
+                }
+                elif (true)
+                {
+                    self.WaitForInput(
+                        "<size=50><color=#FFC964>" + Input.GetKeyName(self._InputKey_Confirm) + "</color>: Place Card" + String.Newline + "<color=#FFC964>" + Input.GetKeyName(self._InputKey_Reject) + "</color>: Keep card</size>",
+                        self._InputKey_Confirm+","+self._InputKey_Reject);
+
+                    while (self._WaitingInput == true)
+                    {
+                        # hold until player clicks something 
+                    }
+
+                    if (self._InputIndex == 1)
+                    {
+                        player.CanPlay = true;
+                        player.PlaceCardRPC();
+                    }
+                    elif (true)
+                    {
+                        wait 1.0;
+
+                        self.NextTurnRPC("");
+                    }
+                }
+            }
+            elif (true)
+            {
+                wait 1.0;
+
+                if (self.DrawUntilMatch == true)
+                {
+                    player.DrawCardRPC(1, false);
+                }
+                elif (true)
+                {
+                    self.NextTurnRPC("");
+                }
+            }
+        }
+    }
+
+    coroutine Slam(character) 
+    {
+        self._TableSlam = true;
+        self._DirectionArrow.Active = false;
+        
+        direction = (character.Position - self._Table.Position);
+        direction.Y = 0;
+        direction = direction.Normalized * 0.7;
+
+        character.PlayAnimation("Armature|attack_3_1", 0.2);
+        
+        wait 0.34;
+
+        self.PlaySoundAt("slam", self._Table.Position + direction);
+        
+        wait 0.1;
+
+        character.PlayAnimation("Armature|attack_3_2", 0.16);
+
+        self.EnableRBCards(true);
+
+        tableRB = self._Table.GetComponent("Rigidbody");
+        deckRB = self._Deck.GetComponent("Rigidbody");
+        tableRB.FreezeRotation = false;
+        deckRB.FreezeRotation = false;
+        forceDir = Random.RandomDirection() * 0.05;
+        forceDir.Y = Math.Abs(forceDir.Y * 3);
+        deckRB.AddForceWithMode(forceDir, "Impulse");
+        deckRB.AddTorque(Vector3(Random.RandomFloat(0, 4)-2, Random.RandomFloat(0, 4)-2, Random.RandomFloat(0, 4)-2), "Impulse");
+        tableRB.AddForceWithModeAtPoint(Vector3.Up * 3, self._Table.Position - direction, "Impulse");
+
+        wait 0.4;
+        
+        character.PlayAnimation("Armature|horse_idle", 0.16);
+    
+        wait 1.2;
+
+        self.EnableRBCards(false);
+        
+        tableRB.SetVelocity(Vector3.Zero);
+        deckRB.SetVelocity(Vector3.Zero);
+        tableRB.FreezeRotation = true;
+        deckRB.FreezeRotation = true;
+        self._Table.Position = Vector3(0.0, 0.5, 0.0); 
+        self._Table.Rotation = Vector3.Zero;
+        self._Deck.Position = self._DrawPosition + Vector3.Down * 0.045;
+        self._Deck.Rotation = self._DrawRotation;
+        self._DirectionArrow.Active = true;
+
+        wait 0.5;
+
+        self._TableSlam = false;
+    }
+
+    function EnableRBCards(enabled) 
+    {
+        if (enabled == true)
+        {
+            for (i in Range(0, self._PlacedCards.Count, 1))
+            {
+                card = self._PlacedCards.Get(i);
+                cardRB = self._PlacedCardsRB.Get(i);
+                cardRB.Active = true;
+                cardRB.Position = card.MapObject.Position;
+                cardRB.Rotation = card.MapObject.Rotation;
+
+                forceDir = Random.RandomDirection() * 0.07;
+                forceDir.Y = Math.Abs(forceDir.Y * 2);
+                cardRB.GetComponent("Rigidbody").AddForceWithMode(forceDir, "Impulse");
+                cardRB.GetComponent("Rigidbody").AddTorque(Vector3(Random.RandomFloat(0, 4)-2, Random.RandomFloat(0, 4)-2, Random.RandomFloat(0, 4)-2), "Impulse");
+
+                card.MapObject.Active = false;
+                UnoCard(cardRB, ""+card.ColorID + card.Index, true);
+                #UnoCard(cardRB, card.Index, card.ColorID, true);
+            }
+        }
+        else
+        {
+            for (card in self._PlacedCardsRB)
+            {
+                card.Active = false;
+            }
+            for (card in self._PlacedCards)
+            {
+                card.MapObject.Active = true;
+            }
+        }
+    }
+
+    function EndGame(winner) 
+    {
+        UI.SetLabel("TopCenter", "");
+        UI.SetLabel("MiddleCenter", "<size=50>Winner: " + winner.Name + "</size>");
+        
+        self._GameState = "end";
+        self._TurnArrow.Active = false;
+        if (Network.IsMasterClient == true)
+        {
+            Game.End(10.0);
+        }
+    }
+
+    function GetIndexOfPlayer(player)
+    {
+        for (i in Range(0, self._UnoPlayers.Count, 1))
+        {
+            if (player == self._UnoPlayers.Get(i))
+            {
+                return i;
+            }
+        }
+    }
+
+    function GetIndexOfHuman(human)
+    {
+        for (i in Range(0, self._UnoPlayers.Count, 1))
+        {
+            if (human == self._UnoPlayers.Get(i).Human)
+            {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    coroutine SetUIObject(position, animName)
+    {
+        self._UIStuff.Active = true;
+        self._UIStuff.Transform.PlayAnimation(animName);
+        self._UIStuff.Position = position;
+        
+        wait 1.0;
+        
+        self._UIStuff.Active = false;
+    }
+
+    function SetShoutIcon(id)
+    {
+        if (id == 1)
+        {
+            self._UI_UNO_1.Active = true;
+            self._UI_UNO_2.Active = false;
+        }
+        elif (id == 2)
+        {
+            self._UI_UNO_1.Active = false;
+            self._UI_UNO_2.Active = true;
+        }
+        else
+        {
+            self._UI_UNO_1.Active = false;
+            self._UI_UNO_2.Active = false;
+        }
+    }
+
+    coroutine UnoShout(human)
+    {
+        self._UnoShout.Position = human.Position + human.Forward * 0.5 + Vector3.Up * 0.8;
+        self._UnoShout.Forward = human.Forward;
+        self._UnoShout.Active = true;
+        self._UnoShout.Transform.GetTransform("particle").ToggleParticle(true);
+        wait 2.0;
+        self._UnoShout.Transform.GetTransform("particle").ToggleParticle(false);
+        self._UnoShout.Active = false;
+    }
+    
+    function SetWildColorRPC(colorID)
+    {
+        Network.SendMessageAll("SetWildColorRPC|" + colorID);
+    }
+
+    function SwitchCardsRPC(index)
+    {
+        myindex = self.GetIndexOfPlayer(self._MyPlayer);
+        Network.SendMessageAll("SwitchCardsRPC|" + myindex + "/" + index);
+    }
+
+    function StartChallengeRPC()
+    {
+        Network.SendMessageAll("StartChallengeRPC");
+    }
+
+    function NextTurnRPC(info)
+    {
+        index = Math.Mod(self._CurrentPlayerTurn + self._Direction, self._UnoPlayers.Count);
+        Network.SendMessageAll("SetTurnRPC|" + index + "/" + info);
+    }
+
+    function PlaySound(name)
+    {
+        self._AudioPlayer.GetTransform("snd_" + name).PlaySound();
+    }
+
+    # for 3D/spatial blend enabled audiosources, use PlaySound() otherwise
+    function PlaySoundAt(name, position)
+    {
+        snd = self._AudioPlayer.GetTransform("snd2_" + name);
+        snd.Position = position;
+        snd.PlaySound();
+    }
+}
+
+component UnoPlayer
+{
+    IsMine = false;
+    CanPlay = false;
+    Human = null;
+    NetworkPlayer = null;
+    UITransform = null;
+    MyCards = List();
+    SelectedIndex = 0;
+    CameraPosition = Vector3(0,0,0);
+    CameraForward = Vector3(0,0,0);
+    _NeedShout = false;
+    _HasShouted = false;
+
+    function Setup(human)
+    {
+        if (Network.IsMasterClient == true)
+        {
+            self.NetworkView.Transfer(human.Player);
+        }
+
+        self.Human = human;
+        self.NetworkPlayer = human.Player;
+        self.IsMine = human.IsMine;
+        self.UITransform = Map.CreateMapObjectRaw("Scene,None,32,0,1,1,1,1,UI,0,0,0,0,0,0,1,1,1,None,Entities,Default,Default|255/255/255/255,");
+        self.SelectedIndex = 0;
+        self.MyCards.Clear();
+    }
+
+    function OnTick()
+    {
+        if (Main._GameState != "inprogress" || self.Human == null)
+        {
+            return;
+        }
+        
+        if (self.IsMine == false || self.CanPlay == true)
+        {
+            for (i in Range(0, self.MyCards.Count, 1))
+            {
+                c = self.MyCards.Get(i).MapObject;
+                pos = c.LocalPosition;
+                if (i == self.SelectedIndex)
+                {
+                    pos.Y = 0-0.1;
+                }
+                else
+                {
+                    pos.Y = 0-0.2;
+                }
+                c.LocalPosition = Vector3.Lerp(c.LocalPosition, pos, 15 * Time.TickTime); 
+            }
+        }
+    }
+    
+    coroutine UpdateCardPositions()
+    {   
+        time = 0.5;
+        t = 0.0;
+        while (t <= time)
+        {
+            cardCount = self.MyCards.Count;
+            max = 10;
+            startOffset = 0.8;
+            offsetX = startOffset / Math.Max(cardCount, max);
+            self.MoveCards(t / time);
+            t += Time.FrameTime;
+        }
+    }
+
+    function MoveCards(t)
+    {
+        cardCount = self.MyCards.Count;
+        max = 10;
+        startOffset = 0.8;
+        offsetX = startOffset / Math.Max(cardCount, max);
+        for (i in Range(0, cardCount, 1))
+        {
+            card = self.MyCards.Get(i).MapObject;
+            x = (offsetX * i) - (offsetX / 2 * (cardCount - 1));
+            pos = Vector3(x, 0-0.2, 0);
+            rot = Vector3(0, 0-5.0, 0);
+            card.LocalPosition = Vector3.Lerp(card.LocalPosition, pos, Interpolation.Evaluate(t, "in"));
+            card.LocalRotation = Quaternion.Slerp(Quaternion.FromEuler(card.LocalRotation), Quaternion.FromEuler(rot), Interpolation.Evaluate(t, "inout")).Euler;
+        }
+    }
+
+    function OnLateFrame() 
+    {
+        if (self.IsMine == true)
+        {
+            #scale = 1.28 / (2.0 * Math.Tan(Camera.FOV / 2.0));
+            #self.UITransform.Scale = Vector3(scale, scale, scale);
+            #Game.Print(self.Human.Player.ID);
+
+            distance = 0.6;
+            self.UITransform.Position = Camera.Position + Camera.Forward * distance;
+            self.UITransform.Forward = Camera.Forward;
+        }
+        else
+        {
+            distance = 1.0;
+            pos = self.CameraPosition + self.CameraForward * distance + self.Human.Forward * 0.2 + Vector3.Up * 0.1;
+            fwd = self.CameraForward;
+            self.UITransform.Position = Vector3.Lerp(self.UITransform.Position, pos, 10 * Time.FrameTime);
+            self.UITransform.Forward = Vector3.Slerp(self.UITransform.Forward, fwd, 10 * Time.FrameTime);
+        }
+    }
+
+    function OnNetworkMessage(sender, message) 
+    {
+        #Game.Print("<color=white>(" + self.NetworkPlayer.ID + ") PLAYER RPC:</color> <color=green>" + message + "</color>");
+
+        split = String.Split(message, "|");
+
+        if (split.Count < 1)
+        {
+            return;
+        }
+        
+        call = split.Get(0);
+        args = List();
+
+        if (split.Count > 1)
+        {
+            args = String.Split(split.Get(1), "/");
+        }
+        
+        if (call == "PlaceCardRPC")
+        {
+            index = Convert.ToInt(args.Get(0));
+            info = args.Get(1);
+
+            card = self.MyCards.Get(index);
+            self.MyCards.RemoveAt(index);
+            self.CanPlay = false;
+
+            # reveal the card before placing it
+            if (sender != Network.MyPlayer)
+            {
+                card.UpdateVisual(true);
+            }
+            
+            self.UpdateCardPositions();
+
+            if (self.MyCards.Count == 1)
+            {
+                self.MyCards.Get(0).ToggleParticle(true);
+                
+                if (Main._MyPlayer != self && self._NeedShout == false)
+                {
+                    self._NeedShout = true;
+                    if (Main._NextPlayer.IsMine == true)
+                    {
+                        Main.SetShoutIcon(2);
+                    }
+                }
+            }
+
+            if (info == "shout")
+            {
+                self._HasShouted = true;
+                Main.SetShoutIcon(0);
+
+                # uno!
+                Main.UnoShout(self.Human);
+                Game.Print("<size=50>UNO</size>");
+            }
+            elif (info == "gamewin")
+            {
+                Main.EndGame(sender);
+                Main.PlaceCardSequence(card, null);
+                card.ToggleParticle(false);
+                return;
+            }
+            Main.PlaceCardSequence(card, self);
+        }
+        elif (call == "RequestCardRPC")
+        {
+            count = Convert.ToInt(args.Get(0));
+            ignoreOnDraw = Convert.ToBool(args.Get(1));
+            self.MasterDrawCardRPC(count, ignoreOnDraw);
+        }
+        elif (call == "MasterDrawCardRPC")
+        {
+            self.CanPlay = false;
+            
+            if (self.MyCards.Count == 1)
+            {
+                self.MyCards.Get(0).ToggleParticle(false);
+            }
+
+            cardIDs = String.Split(args.Get(0), ",");
+            ignoreOnDraw = Convert.ToBool(args.Get(1));
+            
+            visible = self.IsMine || Network.MyPlayer.Status != "Alive";
+            for (c in cardIDs)
+            {
+                new = UnoCard(Main.GetCard(), c, visible);
+                self.MyCards.Add(new);
+                Main.DrawCardSequence(new, self, ignoreOnDraw);
+            }
+
+            self.SelectedIndex = self.MyCards.Count - 1;
+        }
+        elif (call == "UnoShoutRPC")
+        {
+            info = args.Get(0);
+            
+            if (info == "catch")
+            {
+                if (Main._CurrentPlayer == Main._MyPlayer && Main._CurrentPlayer._NeedShout == true && Main._CurrentPlayer._HasShouted == false)
+                {
+                    Main._CurrentPlayer.DrawCardRPC(2, true);
+                    Main._CurrentPlayer._NeedShout = false;
+                    Main._CurrentPlayer._HasShouted = false;
+                    
+                    # catch icon
+                }
+            }
+            elif (info == "lateshout")
+            {
+                if (self._NeedShout == true && self._HasShouted == false)
+                {
+                    self._HasShouted = true;
+                    #aMain.SetShoutIcon(0);
+
+                    # uno!
+                    Main.UnoShout(self.Human);
+                    Game.Print("<size=50>UNO</size>");
+                }
+            }
+
+            Main.SetShoutIcon(0);
+        }
+        elif (call == "ForceRemove")
+        {
+            self.RemovePlayer(player);
+
+            if (player == self._MyPlayer)
+            {
+                UI.SetLabel("MiddleCenter", "<color=red><size=30>Something went wrong..." + String.Newline + "Leaving the match</size></color>");
+            }
+        }
+    }
+
+    function OnCharacterDie(victim, killer, killerName)
+    {
+        if (victim == self.Human)
+        {
+            Main.RemovePlayer(self);
+        }
+    }
+
+    function ForceRemove()    
+    {
+        self.NetworkView.SendMessageAll("ForceRemove");
+    }
+
+    function OnPlayerLeave(player)
+    {
+        if (player == self.NetworkPlayer)
+        {
+            Main.RemovePlayer(self);
+        }
+    }
+
+    function SendNetworkStream()
+    {
+        index = self.SelectedIndex;
+        if (self.CanPlay == false)
+        {
+            index = 0-1;
+        }
+        self.NetworkView.SendStream(index);
+        self.NetworkView.SendStream(Camera.Position);
+        self.NetworkView.SendStream(Camera.Forward);
+    }
+
+    function OnNetworkStream()
+    {
+        self.SelectedIndex = self.NetworkView.ReceiveStream();
+        self.CameraPosition = self.NetworkView.ReceiveStream();
+        self.CameraForward = self.NetworkView.ReceiveStream();
+    }
+
+    function NextCard(left)
+    {
+        if (Main._WaitingInput == true)
+        {
+            return;
+        }
+        
+        if (left == true)
+        {  
+            if (self.SelectedIndex <= 0 )
+            {
+                self.SelectedIndex = self.MyCards.Count - 1;
+            }
+            else
+            {
+                self.SelectedIndex -= 1;
+            }
+        }
+        else
+        {
+            if (self.SelectedIndex >= self.MyCards.Count - 1)
+            {
+                self.SelectedIndex = 0;
+            }
+            else
+            {
+                self.SelectedIndex += 1;
+            }
+        }
+    }
+
+    function HasMatch()
+    {
+        if (Main._LastCard == null)
+        {
+            return true;
+        }
+        
+        for (card in self.MyCards)
+        {
+            if (card.IsMatch(Main._LastCard) == true)
+            {
+                return true;
+            }
+        }
+        
+        return false;
+    }
+
+    function HasCardOfType(index)
+    {
+        for (c in self.MyCards)
+        {
+            if (c.Index == index)
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    function HasCardOfColor(colorId)
+    {
+        for (c in self.MyCards)
+        {
+            if (c.ColorID == colorId)
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    function RevealAllCards(enabled)
+    {
+        for (card in self.MyCards)
+        {
+            card.UpdateVisual(enabled);
+        }
+    }
+
+    function ShoutRPC()
+    {
+        if (Main._CurrentPlayer == self) # player need to shout
+        {
+            if (self._NeedShout == true && self._HasShouted == false)
+            {
+                if (self.MyCards.Count == 1) # is late
+                {
+                    self.NetworkView.SendMessageAll("UnoShoutRPC|lateshout");
+                }
+                else
+                {
+                    self._HasShouted = true;
+                    Main.SetShoutIcon(0);
+                }
+            }
+        }
+        elif (Main._NextPlayer == self)
+        {
+            if (Main._CurrentPlayer._NeedShout == true) # last player need to shout
+            {
+                if (Main._CurrentPlayer._HasShouted == false) # is late
+                {
+                    self.NetworkView.SendMessageAll("UnoShoutRPC|catch");
+                }
+            }
+        }
+    }
+
+    function PlaceCardRPC()
+    {
+        if (self.CanPlay == true && self.MyCards.Count > 0 && self.MyCards.Get(self.SelectedIndex).IsMatch(Main._LastCard) == true)
+        {
+            info = "";
+
+            if (self.MyCards.Count == 1)
+            {
+                info = "gamewin";
+            }
+            elif (self._NeedShout == true && self._HasShouted == true)
+            {
+                if (self._HasShouted == true)
+                {
+                    info = "shout";
+                }
+            }
+
+            self.NetworkView.SendMessageAll("PlaceCardRPC|" + self.SelectedIndex + "/" + info);
+
+            if (self.SelectedIndex > 0)
+            {
+                self.SelectedIndex -= 1;
+            }
+        }
+    }
+
+    function DrawCardRPC(count, ignoreOnDraw)
+    {
+        if (count > 0)
+        {
+            self.NetworkView.SendMessage(Network.MasterClient, "RequestCardRPC|" + count + "/" + ignoreOnDraw);
+        }
+    }
+
+    # only the master keeps track of the cards and draw pile
+    # so the rpc needs to be sent to him to pick a card
+    function MasterDrawCardRPC(count, ignoreOnDraw)
+    {
+        if (count <= 0)
+        {
+            return;
+        }
+        cardList = List();
+        for (i in Range(0, count, 1))
+        {
+            c = Main.GetCardFromPile();
+            if (c != null)
+            {
+                cardList.Add(c);
+            }
+        }
+        if (cardList.Count > 0)
+        {
+            cards = String.Join(cardList, ",");
+            self.NetworkView.SendMessageAll("MasterDrawCardRPC|" + cards + "/" + ignoreOnDraw);
+        }
+    }
+}
+
+class UnoCard
+{
+    MapObject = null;
+    Index = 0;
+    ColorID = 0;
+    
+    function Init(obj, info, visible)
+    {
+        # info = "XYY": X = colorid, Y = card id/index
+
+        c = Convert.ToInt(String.SubstringWithLength(info, 0, 1));
+        i = Convert.ToInt(String.Substring(info, 1));
+
+        self.MapObject = obj;
+        self.Index = i;
+
+        if (self.Index <= 14)
+        {
+            self.ColorID = c;
+        }
+        else
+        {
+            self.ColorID = 0;
+        }
+        self.UpdateVisual(visible);
+    }
+
+    function UpdateVisual(visible)
+    {
+        # visible shows/hides the card face so other players cant peek while the card is moving around
+        if (visible == true)
+        {
+            col = Color(0,0,0);
+
+            if (self.ColorID == 1) # green
+            {
+                col = Color(99,199,77);
+            }
+            elif (self.ColorID == 2) # blue
+            {
+                col = Color(0,149,233);
+            }
+            elif (self.ColorID == 3) # red
+            {
+                col = Color(228,59,68);
+            }
+            elif (self.ColorID == 4) # yellow
+            {
+                col = Color(254,174,52);
+            }
+            
+            self.MapObject.Color = col;
+            self.MapObject.TextureOffsetX = self.Index;
+        }
+        else
+        {
+            self.MapObject.Color = Color(0,0,0);
+            self.MapObject.TextureOffsetX = 18;
+        }
+    }
+
+    function IsMatch(card)
+    {
+        # return true if it's a special card or if the color/symbol is the same
+        return self.ColorID == 0 || self.ColorID == card.ColorID || self.Index == card.Index;
+    }
+
+    function GetCardID()
+    {
+        return self.ColorID + "" + self.Index;
+    }
+
+    function ToggleParticle(enabled)
+    {
+        self.MapObject.Transform.GetTransform("LastParticle").ToggleParticle(enabled);
+    }
+}
+
+component Billboard
+{
+    function OnLateFrame() 
+    {
+        self.MapObject.Forward = Camera.Forward;
+    }    
+}
+
+component Rotator 
+{
+    Speed = Vector3(0,0,0);
+    Local = false;
+
+    function OnTick()
+    {
+        if (self.Local == true)
+        {
+            self.MapObject.Transform.Rotate(self.Speed * Time.TickTime);
+        }
+        else
+        {
+            self.MapObject.Rotation = self.MapObject.Rotation + self.Speed * Time.TickTime;
+        }
+    }
+}
+
+extension Interpolation
+{
+    function Evaluate(x, ease)
+    {
+        x = Math.Clamp(x, 0.0, 1.0);
+        
+        if (ease == "linear")
+        {
+            return x;
+        }
+        elif (ease == "in")
+        {
+            return x * x * x;
+        }
+        elif (ease == "out") # cubic easing
+        {
+            return 1.0 - Math.Pow(1.0 - x, 3.0);
+        }
+        elif (ease == "inout") # cubic easing
+        {
+            if (x < 0.5)
+            {
+                return 4.0 * x * x * x;
+            }
+            else
+            {
+                return 1.0 - (Math.Pow(0-2.0 * x + 2.0, 3.0) / 2.0);
+            }
+        }
+        
+        return x;
+    }
+}
+
+extension ListX
+{
+    function Shuffle(list)
+    {
+        n = list.Count;
+        while (n > 1)
+        {
+            n -= 1;
+            k = Random.RandomInt(0, n + 1);
+            i = list.Get(k);
+            list.Set(k, list.Get(n));
+            list.Set(n, i);
+        }
+    }
+
+    function IndexOf(list, obj)
+    {
+        for (i in Range(0, list.Count, 1))
+        {
+            if (list.Get(i) == obj)
+            {
+                return i;
+            }
+        }
+        return 0-1;
+    }
+
+    function Contains(list, obj)
+    {
+        for (element in list)
+        {
+            if (element == obj)
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    function Random(list)
+    {
+        if (list.Count == 0)
+        {
+            return null;
+        }
+        return list.Get(Random.RandomInt(0, list.Count));
+    }
+}
+
+extension MoveX 
+{
+    coroutine MoveTo(mapobject, start, end, time, easing)
+    {
+        startTime = Time.GameTime;
+        while ((Time.GameTime - startTime) <= time)
+        {
+            pos = Vector3.Lerp(start, end, Interpolation.Evaluate((Time.GameTime - startTime) / time, easing));
+            mapobject.Position = pos;
+        }
+        mapobject.Position = end;
+    }
+
+    coroutine RotateTo(mapobject, startRotation, targetRot, time, easing)
+    {
+        startQuat = Quaternion.FromEuler(startRotation);
+        targetQuat = Quaternion.FromEuler(targetRot);
+
+        t = 0.0;
+        while (t < time)
+        {
+            mapobject.Rotation = Quaternion.Slerp(startQuat, targetQuat, Interpolation.Evaluate(t/time, easing)).Euler;
+            
+            t += Time.FrameTime;
+        }
+        mapobject.Rotation = targetRot;
+    }
+
+    coroutine ScaleTo(mapobject, startScale, endScale, time, easing)
+    {
+        startTime = Time.GameTime;
+        while (Time.GameTime - startTime <= time)
+        {
+            scale = Vector3.Lerp(startScale, endScale, Interpolation.Evaluate((Time.GameTime - startTime) / time, easing));
+            mapobject.Scale = scale;
+        }
+        mapobject.Scale = endScale;
+    }
+
+    coroutine MoveToParent(mapobject, parent, start, end, time, easing)
+    {
+        t = 0.0;
+        while (t < time)
+        {
+            pos = Vector3.Lerp(start, parent.Transform.TransformPoint(end), Interpolation.Evaluate(t/time, easing));
+            mapobject.Position = pos;
+            t += Time.FrameTime;
+            wait 0.0;
+        }
+        
+        mapobject.Parent = parent;
+        mapobject.LocalPosition = end;
+    }
+
+    coroutine RotateToParent(mapobject, parent, startRotation, targetRot, time, easing)
+    {
+        startQuat = Quaternion.FromEuler(startRotation);
+        targetQuat = Quaternion.FromEuler(targetRot);
+
+        t = 0.0;
+        while (t < time)
+        {
+            mapobject.Rotation = Quaternion.Slerp(startQuat, Quaternion.FromEuler(parent.Transform.Rotation) * targetQuat, Interpolation.Evaluate(t / time, easing)).Euler;
+
+            t += Time.FrameTime;
+            wait 0.0;
+        }
+
+        mapobject.Parent = parent;
+        mapobject.LocalRotation = targetRot;
+    }
+}
+
+extension MathX
+{
+    function Atan2(y, x)
+    {
+        if (x > 0)
+        {
+            return Math.Deg2Rad(Math.Atan(y / x));
+        }
+        elif (x < 0 && y >= 0)
+        {
+            return Math.Deg2Rad(Math.Atan(y / x)) + Math.PI;
+        }
+        elif (x < 0 && y < 0)
+        {
+            return Math.Deg2Rad(Math.Atan(y / x)) - Math.PI;
+        }
+        elif (x == 0 && y > 0)
+        {
+            return Math.PI / 2;
+        }
+        elif (x == 0 && y < 0)
+        {
+            return 0-Math.PI / 2;
+        }
+        return 0;
+    }
+}
+
+extension ColorX 
+{
+    function Lerp(a, b, t)
+    {
+        return Color(Math.Round(Math.Lerp(a.R, b.R, t)), Math.Round(Math.Lerp(a.G, b.G, t)), Math.Round(Math.Lerp(a.B, b.B, t)), Math.Round(Math.Lerp(a.A, b.A, t)));
+    }
+}

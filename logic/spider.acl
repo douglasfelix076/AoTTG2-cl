@@ -1,0 +1,682 @@
+class Main
+{
+    _spiderID = 10;
+    _original = null;
+    _spiderCount = 0;
+
+    # (TO-DO) fix the way the spider is spawned
+
+    function Init()
+    {
+        self._original = Map.FindMapObjectByID(self._spiderID);
+    }
+    
+    function OnGameStart()
+    {
+        if (self._spiderCount < Network.Players.Count)
+        {
+            
+        }
+    }
+    
+    function OnPlayerSpawn(player)
+    {
+        if (player == Network.MyPlayer)
+        {
+            Network.SendMessageAll("CreateSpider");
+        }
+    }
+    
+    function OnNetworkMessage(sender, message)
+    {
+        if (message == "CreateSpider")
+        {
+            self.CreateSpider(sender);
+        }
+    }
+
+    coroutine CreateSpider(player)
+    {
+        obj = Map.CopyMapObject(self._original, true);
+        spider = obj.GetComponent("SpiderMount");
+        obj.Position = Vector3.Up * spider.Scale;
+        obj.Active = true;
+        if (Network.IsMasterClient)
+        {
+            spider = obj.GetComponent("SpiderMount");
+            spider.SetOwner(player);
+        }
+        self._spiderCount += 1;
+    }
+}
+
+component SpiderMount
+{
+    MoveSpeed = 20.0;
+    TurnSpeed = 10.0;
+    JumpHeight = 30.0;
+    Gravity = 20.0;
+    Accel = 10.0;
+    AirAccel = 4.0;
+    Height = 2.0;
+    DampingFactor = 5.0;
+    SpringFactor = 40.0;
+    Scale = 1.0;
+
+    _human = null;
+    _rigidbody = null;
+    _body = null;
+    _bodyAbd = null;
+    _legRestPositions = List();
+    _legTargets = List();
+    _legPoles = List();
+    _groundedlegs = List();
+    _legCooldown = List();
+    _legRestRadius = 100.0;
+    _directionY = 0.0;
+    _isMoving = false;
+    _isJumping = false;
+    _isGrounded = true;
+    _moveDirection = Vector3.Zero;
+    _AbdTarget = Vector3.Zero;                
+    _Initialized = false;
+    
+    function Init()
+    {
+        if (self._Initialized == false)
+        {
+            # when a object gets copied its components are initialized before the
+            # children are copied so it needs to be setup with a bit of delay
+            self.Setup();
+        }
+    }
+
+    coroutine Setup()
+    {
+        # wait for a frame
+        wait 0.0;
+        
+        self._rigidbody = self.MapObject.GetComponent("Rigidbody");
+        self._body = self.MapObject.GetChild("Spider Body");
+        self._bodyAbd = self.MapObject.GetChild("Spider Abd Origin");
+        
+        self.MapObject.Scale = Vector3(self.Scale, self.Scale, self.Scale);
+        self.Height *= self.Scale;
+        self.MoveSpeed *= self.Scale;
+        self.JumpHeight *= self.Scale;
+        #self._rigidbody.Mass = self.Scale;
+
+        ids = List();
+        ids.Add(self.MapObject.GetChild("L1Joint1").GetChild("Joint2").GetChild("Joint3").GetChild("JointLeafL1"));
+        ids.Add(self.MapObject.GetChild("L2Joint1").GetChild("Joint2").GetChild("Joint3").GetChild("JointLeafL2"));
+        ids.Add(self.MapObject.GetChild("L3Joint1").GetChild("Joint2").GetChild("Joint3").GetChild("JointLeafL3"));
+        ids.Add(self.MapObject.GetChild("L4Joint1").GetChild("Joint2").GetChild("Joint3").GetChild("JointLeafL4"));
+        ids.Add(self.MapObject.GetChild("R1Joint1").GetChild("Joint2").GetChild("Joint3").GetChild("JointLeafR1"));
+        ids.Add(self.MapObject.GetChild("R2Joint1").GetChild("Joint2").GetChild("Joint3").GetChild("JointLeafR2"));
+        ids.Add(self.MapObject.GetChild("R3Joint1").GetChild("Joint2").GetChild("Joint3").GetChild("JointLeafR3"));
+        ids.Add(self.MapObject.GetChild("R4Joint1").GetChild("Joint2").GetChild("Joint3").GetChild("JointLeafR4"));
+        
+        for(legObj in ids)
+        {   
+            IK = legObj.GetComponent("IKActor");
+            if (self.MapObject.Active == true)
+            {
+                legObj.Active = true;
+            }
+            IK.RecalculateLengths(self.Scale);
+            self._legTargets.Add(IK._target);
+            self._legPoles.Add(IK._pole);
+            self._groundedlegs.Add(true);
+            self._legCooldown.Add(0-1.0);
+        }
+
+        distance = 3;
+        ang = 90;
+        
+        # left legs
+        for(i in Range(0,4,1))
+        {
+            self._legRestPositions.Add(VectorX.EulerToDirection(Vector3(0,ang + (135 - (30 * i)),0)) * distance);
+        }
+        # right legs
+        for(i in Range(0,4,1))
+        {
+            self._legRestPositions.Add(VectorX.EulerToDirection(Vector3(0,ang - (135 - (30 * i)),0)) * distance);
+        }
+        
+        #self.MapObject.AddSphereCollider("Physical", "MapObjects", Vector3(0,0,-1), 1.0);
+        self._Initialized = true;
+    }
+
+    function OnTick()
+    {
+        if (self._Initialized == false || self.MapObject.Active == false)
+        {
+            return;
+        }
+
+        if (self._human != null)
+        {
+            if (self._human.CurrentAnimation != "Armature|horse_idle")
+            {
+                self._human.PlayAnimation("Armature|horse_idle");
+            }   
+
+            xInput = 0.0;
+            yInput = 0.0;
+            if (Input.GetKeyHold("General/Forward"))
+            {
+                yInput += 1.0;
+            }
+            if (Input.GetKeyHold("General/Back"))
+            {
+                yInput -= 1.0;
+            }
+            if (Input.GetKeyHold("General/Left"))
+            {
+                xInput -= 1.0;
+            }
+            if (Input.GetKeyHold("General/Right"))
+            {
+                xInput += 1.0;
+            }
+            if (xInput == 0.0 && yInput == 0.0)
+            {
+                self._isMoving = false;
+                self._legRestRadius = 0.20;
+            }
+            else
+            {
+                self._isMoving = true;
+                self._legRestRadius = 1.0;
+            }
+
+            self._directionY = Camera.Rotation.Y;
+            self._moveDirection = (VectorX.EulerToDirection(Vector3(0,self._directionY,0)) * xInput) + (VectorX.EulerToDirection(Vector3(0,self._directionY - 90,0)) * yInput).Normalized;
+        }
+        else
+        {
+            self._isMoving = false;
+            self._moveDirection = Vector3.Zero;
+            self._legRestRadius = 0.2;
+        }
+
+        avg = Vector3.Zero;
+        groundDir = Vector3.Zero;
+        grounded = 0;
+        vel = self._rigidbody.GetVelocity();
+           
+        for(i in Range(0, 8, 1))
+        {
+            currentTarget = self._legTargets.Get(i);
+            avg += currentTarget.Position / 8;
+            
+            # check if nearby legs are on the ground
+            adjacentDown = false;
+            if (i == 0)
+            {
+                adjacentDown = self._groundedlegs.Get(7) == true && self._groundedlegs.Get(1) == true;
+            }
+            elif (i == 7)
+            { 
+                adjacentDown = self._groundedlegs.Get(6) == true && self._groundedlegs.Get(0) == true;
+            }
+            else
+            {
+                adjacentDown = self._groundedlegs.Get(i - 1) == true && self._groundedlegs.Get(i + 1) == true;
+            }
+            
+            restPosition = self.MapObject.Transform.TransformPoint(self._legRestPositions.Get(i) + Vector3.Down * 2);
+
+            castLength = 4.0 * self.Scale;
+            cast = Physics.LineCast(restPosition + self.MapObject.Up * castLength, restPosition - self.MapObject.Up * castLength, "MapObjects");
+            if (cast != null)
+            {
+                restPosition = cast.Point;
+                groundDir += cast.Normal;
+                grounded += 1;
+                
+                # adds a bit of time before the leg can move again to give time for adjacent legs to move
+                inCooldown = self._legCooldown.Get(i) >= 0.0;
+                if (adjacentDown && inCooldown == false && (currentTarget.Position - restPosition).Magnitude > self._legRestRadius * self.Scale)
+                {
+                    if (self._isMoving)
+                    {
+                        offset = vel / 6;
+                        offset.Y = 0;
+                        self.MoveLeg(i, restPosition + offset, 0.1);
+                    }
+                    else
+                    {
+                        self.MoveLeg(i, restPosition, 0.2);
+                    }
+                }
+            }
+            else
+            {
+                currentTarget.Position = Vector3.Lerp(currentTarget.Position, restPosition - self.MapObject.Up * 2 * self.Scale, Time.TickTime * 20);
+            }
+
+            self._legCooldown.Set(i, self._legCooldown.Get(i) - Time.FrameTime);
+            self._legPoles.Get(i).Position = (self.MapObject.Position + currentTarget.Position) / 2 + self.MapObject.Up * 6 * self.Scale;
+        }
+
+        groundDir = (groundDir / grounded).Normalized;
+        self._isGrounded = grounded >= 4;
+        # movement
+        relativeVel = self.MapObject.Transform.InverseTransformDirection(vel);
+        relativeMove = self.MapObject.Transform.InverseTransformDirection(self._moveDirection * self.MoveSpeed);
+        zero = relativeMove - relativeVel;
+        zero.Y = 0;
+        accel = self.Accel;
+        if (self._isGrounded == false)
+        {
+            accel = self.AirAccel;
+        }
+        force = (self.MapObject.Transform.TransformDirection(zero) * accel) - (self._moveDirection * self.MoveSpeed);
+        self._rigidbody.AddForce(force);
+
+        # if 4 or more legs are grounded then change the gravity direction to the surface normal
+        if (self._isGrounded && self._isJumping == false)
+        {
+            vel = self._rigidbody.GetVelocity();
+            rayDir = groundDir * (0-1);
+            rayDirVel = Vector3.Dot(rayDir, vel);
+            y = Vector3.Dot(self.MapObject.Position - avg, groundDir) - self.Height;
+            springForce = (y * self.SpringFactor) - (rayDirVel * self.DampingFactor);
+            self._rigidbody.AddForce(rayDir * springForce);
+        }
+        else
+        {
+            if (grounded != 8 && self._isJumping == true)
+            {
+                self._isJumping = false;
+            }
+            groundDir = Vector3.Up;
+            self._rigidbody.AddForce(Vector3.Down * self.Gravity);
+        }
+
+        if (self.NetworkView.Owner == Network.MyPlayer)
+        {
+            self.MapObject.Rotation = Quaternion.Lerp(Quaternion.FromEuler(self.MapObject.Rotation), QuaternionX.LookRotationY(VectorX.EulerToDirection(Vector3(0, self._directionY - 90, 0)), groundDir), self.TurnSpeed * Time.TickTime).Euler;
+        }
+
+        self._AbdTarget = Vector3.Slerp(self._AbdTarget, self.MapObject.Transform.TransformPoint(self._bodyAbd.LocalPosition - Vector3.Forward * 4), 10 * Time.TickTime);
+        self._bodyAbd.Rotation = QuaternionX.LookRotation(self._bodyAbd.Position - self._AbdTarget, self.MapObject.Up).Euler;
+    }
+
+    function OnFrame()
+    {
+        if (self.MapObject.Active == false || self.NetworkView.Owner != Network.MyPlayer)
+        {
+            return;
+        }
+
+        if (self._human == null)
+        {
+            if (Network.MyPlayer.Status == "Alive" && Network.MyPlayer.CharacterType == "Human")
+            {
+                human = Network.MyPlayer.Character;
+                if ((human.Position - self.MapObject.Position).Magnitude < 5.0 + 5.0* self.Scale)
+                {
+                    if (Input.GetKeyDown("Human/HorseMount") )
+                    {
+                        Camera.Forward = self.MapObject.Forward;
+                        human.MountMapObject(self.MapObject, Vector3(0,0,0-0.5), Vector3(0,0,0));
+                        human.ClearHooks();
+                        self._human = human;
+                        Camera.FollowDistance = 1 + self.Scale;
+                    }   
+                } 
+            }
+        }  
+        else
+        {
+            if (Input.GetKeyDown("Human/HorseMount"))
+            {
+                self._human.Unmount();
+                self._human = null;
+                Camera.FollowDistance = 1.5;
+            }
+            if (Input.GetKeyDown("Human/HorseJump") && self._isGrounded == true)
+            {
+                self._isJumping = true;
+                self._rigidbody.AddForceWithMode(Vector3.Up * self.JumpHeight, "Impulse");
+            }
+        }
+    }
+
+    # i: int, newPosition: Vector3, time: float
+    coroutine MoveLeg(i, newPosition, time)
+    {
+        if (self._groundedlegs.Get(i) == true)
+        {
+            self._groundedlegs.Set(i, false);
+
+            leg = self._legTargets.Get(i);
+            startPosition = leg.Position;
+            middlePosition = (startPosition + newPosition) / 2; 
+            middlePosition = middlePosition + self.MapObject.Up * 0.3 * self.Scale; 
+            half = time / 2.0;
+            currentTime = 0.0;
+            while (currentTime < half)
+            {
+                leg.Position = Vector3.Lerp(startPosition, middlePosition, currentTime / half);
+                currentTime += Time.FrameTime;
+                wait 0.0;
+            }
+            currentTime -= half;
+            while (currentTime < half)
+            {
+                leg.Position = Vector3.Lerp(middlePosition, newPosition, currentTime / half);
+                currentTime += Time.FrameTime;
+                wait 0.0;
+            }
+            leg.Position = newPosition;
+            self._groundedlegs.Set(i, true);
+            self._legCooldown.Set(i, 0.05);
+        }
+    }
+
+    function SetOwner(player)
+    {
+        self.NetworkView.Transfer(player);
+    }
+}
+
+component Target
+{
+    Distance = 1.0;
+    Speed = 1.0;
+    FollowMouse = false;
+    _startPosition = Vector3.Zero;
+
+    function Init()
+    {
+        self._startPosition = self.MapObject.Position;
+    }
+
+    function OnTick()
+    {
+        if (self.FollowMouse)
+        {
+            pos = Input.GetMouseAim();
+            pos.Y = 3;
+            self.MapObject.Position = pos;
+        }
+        else
+        {
+            angle = Time.GameTime * 360 * self.Speed;
+            self.MapObject.Position = self._startPosition + Vector3(Math.Sin(angle), 0, Math.Cos(angle)) * self.Distance;
+        }
+    }
+}
+
+component IKActor
+{
+    BoneCount = 0;
+    Iterations = 10;
+    _target = null;
+    _pole = null;
+    _bones = List();
+    _positions = List();
+    _lengths = List();
+    _startRotations = List();
+    _fullLength = 0.0;
+    _root = null;
+    _positionCount = 0;
+
+    function Init()
+    {
+        self._root = self.MapObject;
+        for (i in Range(0, self.BoneCount, 1))
+        {   
+            if (self._root == null)
+            {
+                Game.Print("Bone count is longer than parent hierarchy.");
+                return; 
+            }
+            self._root = self._root.Parent;
+        }
+                
+        if (self._target == null)
+        {
+            self._target = self.CreateControllerObject(self.MapObject.Name + " Target", false);
+            self._target.Position = self.MapObject.Position;
+        }
+        if (self._pole == null)
+        {
+            self._pole = self.CreateControllerObject(self.MapObject.Name + " Pole", false);
+            self._pole.Position = (self._root.Position + self._target.Position) / 1.3 + self.MapObject.Up * 5;
+        }
+
+        self._bones.Add(self.MapObject);
+        self._lengths.Add(0.0);
+        self._startRotations.Add(Quaternion.FromEuler(self.MapObject.Rotation));
+        self._positions.Add(self.MapObject.Position);
+        
+        current = self.MapObject.Parent;
+        for (i in Range(0, self.BoneCount, 1))
+        {
+            self._startRotations.Add(Quaternion.FromEuler(current.Rotation));
+            self._positions.Add(Vector3.Zero);
+            self._bones.InsertAt(0, current);
+            len = (self._bones.Get(1).Position - self._bones.Get(0).Position).Magnitude;
+            self._lengths.InsertAt(0, len);
+            self._fullLength += len;
+            current = current.Parent;
+        }
+        self._positionCount = self.BoneCount + 1;
+    }
+    
+    function CreateControllerObject(name, visible)
+    {
+        if (visible == true)
+        {
+            return Map.CreateMapObjectRaw("Scene,Geometry/Hedron1a,100,0,1,1,1,0," + name + ",0,0,0,0,0,0,.5,.5,.5,None,Entities,Default,Default|255/0/255/255,");
+        }
+        else
+        {
+            return Map.CreateMapObjectRaw("Scene,None,100,0,1,1,1,0," + name + ",0,0,0,0,0,0,1,1,1,None,Entities,Default,Default|255/255/255/255,");
+        }
+    }
+    
+    function OnTick()
+    {
+        if (self.MapObject.Active == true)
+        {
+            distance = (self._root.Position - self._target.Position).Magnitude;
+            if (distance > self._fullLength)
+            {
+                # rotates all bones towards the target since the distance is already past the full length
+                self.StraightenTowards(self._target.Position);
+            }
+            else
+            {	
+                # align all bones to the pole
+                self.StraightenTowards(self._pole.Position);
+                
+                for(iteration in Range(0, Math.Max(self.Iterations,1), 1))
+                {
+                    # forwarding
+                    self._positions.Set(self._positionCount - 1, self._target.Position);
+                    
+                    i = self._positionCount - 2;
+                    while (i >= 0)
+                    {
+                        next = self._positions.Get(i + 1);	
+                        self._positions.Set(i, next + (self._positions.Get(i) - next).Normalized * self._lengths.Get(i));
+                        i -= 1;
+                    }
+
+                    # retracting
+                    self._positions.Set(0, self._root.Position);
+                    for (i in Range(1, self._positionCount, 1))
+                    {
+                        previous = self._positions.Get(i - 1);
+                        self._positions.Set(i, previous + (self._positions.Get(i) - previous).Normalized * self._lengths.Get(i - 1));
+                    }
+                }
+            }
+            
+            # applying rotations and positions
+            for (i in Range(0, self.BoneCount, 1))
+            {
+                self._bones.Get(i).Rotation = (QuaternionX.LookRotation((self._positions.Get(i + 1) - self._positions.Get(i)).Normalized, self._pole.Position)).Euler;
+            }
+            
+            for (i in Range(0, self._positionCount, 1))
+            {
+                self._bones.Get(i).Position = self._positions.Get(i);
+            }
+        }
+    }
+
+    function StraightenTowards(target)
+    {
+        current = self._root.Position;
+        fromTo = (target - self._root.Position).Normalized;
+        for (i in Range(0, self._positionCount - 1, 1))
+        {
+            self._positions.Set(i, current);
+            current += fromTo * self._lengths.Get(i);
+        }
+    }
+
+    function RecalculateLengths(newScale)
+    {
+        for (i in Range(0, self._lengths.Count, 1))
+        {
+            self._lengths.Set(i, self._lengths.Get(i) * newScale);
+        }
+        self._fullLength *= newScale;
+    }
+}
+
+extension VectorX;
+{
+    function EulerToDirection(euler)
+    {
+        pitch = 0-euler.X;
+        yaw = 0-euler.Y; 
+        
+        return Vector3(Math.Cos(yaw) * Math.Cos(pitch), Math.Sin(pitch), Math.Sin(yaw) * Math.Cos(pitch));
+    }
+
+    function DirectionToEuler(direction)
+    {
+        yaw = MathX.Atan2(direction.Z, direction.X) * Math.Rad2DegConstant;
+        pitch = MathX.Atan2(direction.Y, Math.Sqrt(direction.X * direction.X + direction.Z * direction.Z)) * Math.Rad2DegConstant;
+        return Vector3(pitch, yaw, 0);
+    }
+}
+
+extension QuaternionX;
+{
+    function Inverse(q)
+    {
+        normSquared = q.W * q.W + q.X * q.X + q.Y * q.Y + q.Z * q.Z;
+        
+        if (normSquared > 0)
+        {
+            return Quaternion(q.W / normSquared, 0-q.X / normSquared, 0-q.Y / normSquared, 0-q.Z / normSquared);
+        }
+        return Quaternion(0, 0, 0, 0);
+    }
+
+    function LookRotationY(forward, up)
+    {
+        ztoup = self.LookRotation(up, forward * 0-1);
+        ytoz = Quaternion.FromEuler(Vector3(90, 0, 0));
+        return ztoup * ytoz;
+    }
+
+    function LookRotation(forward, up)
+    {
+        forward = forward.Normalized;
+        up = up - (forward * Vector3.Dot(up, forward));
+        up = up.Normalized;
+
+        vector = forward.Normalized;
+        vector2 = Vector3.Cross(up, vector);
+        vector3 = Vector3.Cross(vector, vector2);
+        m00 = vector2.X;
+        m01 = vector2.Y;
+        m02 = vector2.Z;
+        m10 = vector3.X;
+        m11 = vector3.Y;
+        m12 = vector3.Z;
+        m20 = vector.X;
+        m21 = vector.Y;
+        m22 = vector.Z;
+
+        num8 = (m00 + m11) + m22;
+        quaternion = Quaternion.Identity;
+        if (num8 > 0.0)
+        {
+            num = Math.Sqrt(num8 + 1.0);
+            quaternion.W = num * 0.5;
+            num = 0.5 / num;
+            quaternion.X = (m12 - m21) * num;
+            quaternion.Y = (m20 - m02) * num;
+            quaternion.Z = (m01 - m10) * num;
+            return quaternion;
+        }
+        if ((m00 >= m11) && (m00 >= m22))
+        {
+            num7 = Math.Sqrt(((1.0 + m00) - m11) - m22);
+            num4 = 0.5 / num7;
+            quaternion.X = 0.5 * num7;
+            quaternion.Y = (m01 + m10) * num4;
+            quaternion.Z = (m02 + m20) * num4;
+            quaternion.W = (m12 - m21) * num4;
+            return quaternion;
+        }
+        if (m11 > m22)
+        {
+            num6 = Math.Sqrt(((1.0 + m11) - m00) - m22);
+            num3 = 0.5 / num6;
+            quaternion.X = (m10 + m01) * num3;
+            quaternion.Y = 0.5 * num6;
+            quaternion.Z = (m21 + m12) * num3;
+            quaternion.W = (m20 - m02) * num3;
+            return quaternion;
+        }
+        num5 = Math.Sqrt(((1.0 + m22) - m00) - m11);
+        num2 = 0.5 / num5;
+        quaternion.X = (m20 + m02) * num2;
+        quaternion.Y = (m21 + m12) * num2;
+        quaternion.Z = 0.5 * num5;
+        quaternion.W = (m01 - m10) * num2;
+
+        return quaternion;
+    }
+}
+
+extension MathX;
+{
+    function Atan2(y, x)
+    {
+        if (x > 0)
+        {
+            return Math.Deg2Rad(Math.Atan(y / x));
+        }
+        elif (x < 0 && y >= 0)
+        {
+            return Math.Deg2Rad(Math.Atan(y / x)) + Math.PI;
+        }
+        elif (x < 0 && y < 0)
+        {
+            return Math.Deg2Rad(Math.Atan(y / x)) - Math.PI;
+        }
+        elif (x == 0 && y > 0)
+        {
+            return Math.PI / 2;
+        }
+        elif (x == 0 && y < 0)
+        {
+            return 0-Math.PI / 2;
+        }
+        return 0;
+    }
+}

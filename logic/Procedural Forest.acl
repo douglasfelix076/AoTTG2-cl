@@ -1,0 +1,560 @@
+class Main
+{
+    ForestType = "Default";
+    Seed = -1;
+    Width = 20;
+    Length = 20;
+    TreeHeightMin = 0.9;
+    TreeHeightMax = 1.5;
+    TreeWidthMin = 0.8;
+    TreeWidthMax = 1.4;
+    TreeSpacing = 100.0;
+    SupplyPercentage = 20;
+    LightPercentage = 10;
+    RespawnDelay = 5.0;
+    InfiniteGas = false;
+    MaxTitans = 100;
+    ProportionalTitanCount = true; 
+    TitansRespawn = true;
+    DisableBarrier = false;
+    ExtraDetails = true; 
+    
+    Description = "A forest map that is procedurally generated";
+    ForestTypeDropbox = "Default, Classic, Dead, Type_a, Type_b";
+    ExtraDetailsTooltip = "Disabling this will remove all foliage and fx for extra performance.";
+    SeedTooltip = "Seed the generator will use, leave as -1 for a random seed.";
+    SupplyPercentageTooltip = "% of trees that will contain a supply (0-100).";
+    LightPercentageTooltip = "% of trees that will contain a lamp (0-100).";
+    ProportionalTitanCountTooltip = "If enabled the number of titans will depend on the size of the map."; 
+
+    _finishedGeneration = false;
+    _randomizer = null;
+    _internalSeed = -1;
+    _titanLimit = 0;
+    _hasSpawned = false;
+    _dieTimeLeft = 0.0;
+    _barrierMargin = 40;
+    _borderWidth = 0.0;
+    _borderLength = 0.0;
+    _treePositions = null;
+    _treeSizes = null;
+    
+    # cached objects
+    _baseSupplyStand = null;
+    _baseSupply = null;
+    _baseLamp = null;
+    _baseSpawnPointT = null;
+    _baseSpawnPointH = null;
+    
+    function OnGameStart()
+    {
+        if (Network.IsMasterClient)
+        {
+            if (self.ProportionalTitanCount)
+            {
+                self._titanLimit = Math.Ceil(Math.Sqrt((self.Width * self.Length) * 8 * self.TreeSpacing / 100));
+            }
+            else
+            {
+                self._titanLimit = self.MaxTitans;
+            }
+
+            self._internalSeed = self.Seed;
+            if (self.Seed == -1)
+            {
+                self._internalSeed = Random.RandomInt(0, 999999);
+            }
+            self.StartGen(self._internalSeed);
+        }
+        else
+        {
+            Network.SendMessage(Network.MasterClient, "requestSeed");
+            UI.SetLabel("MiddleCenter", "Waiting for seed...");
+        }
+    }
+    
+    function OnNetworkMessage(sender, message)
+    {
+        if (message == "OnGameStart" && Network.IsMasterClient)
+        {
+            Network.SendMessage(sender, Convert.ToString(self._internalSeed));
+        }
+        elif (message == "requestSeed" && sender == Network.MasterClient) 
+        {
+            UI.SetLabel("MiddleCenter", "");
+            self.StartGen(Convert.ToInt(message));
+        }
+    }
+
+    function OnCharacterSpawn(character)
+    {
+        if (character.IsMainCharacter && character.Type == "Human" && self.InfiniteGas)
+        {
+            character.MaxGas = 100000;
+            character.CurrentGas = 100000;
+        }
+        
+        self._hasSpawned = true;
+    }
+
+    function OnCharacterDie(victim, killer, killerName)
+    {
+        if (victim.IsMainCharacter)
+        {
+            self._dieTimeLeft = self.RespawnDelay;
+        }
+        elif (victim.Team == "Titan" && self.TitansRespawn)
+        {
+            Game.SpawnTitan("Default");
+        }
+        
+        if (self._finishedGeneration && self.TitansRespawn == false && Network.IsMasterClient && !Game.IsEnding)
+        {
+            titans = Game.Titans.Count;
+            humans = Game.Humans.Count;
+            playerShifters = Game.PlayerShifters.Count;
+            if (titans == 0)
+            {
+                UI.SetLabelAll("MiddleCenter", "Humanity wins!");
+                Game.End(10.0);
+                return;
+            }
+            if (humans == 0 && playerShifters == 0 && self._hasSpawned)
+            {
+                UI.SetLabelAll("MiddleCenter", "Humanity failed!");
+                Game.End(10.0);
+                return;
+            }
+        }
+
+    }
+
+    function OnTick()
+    {
+        if (self.TitansRespawn)
+        {
+            UI.SetLabelAll("TopCenter", "Time: " + Math.Floor(Time.GameTime));
+        }
+        else
+        {
+            titans = Game.Titans.Count;
+            UI.SetLabelAll("TopCenter", "Titans Left: " + Convert.ToString(titans));
+        }
+        
+        self._dieTimeLeft = self._dieTimeLeft - Time.TickTime;
+        
+        if (self._finishedGeneration == false)
+        {
+            return;
+        }
+
+        if (Network.MyPlayer.Status == "Dead")
+        {
+            if (self._dieTimeLeft <= 0.0)
+            {
+                Game.SpawnPlayer(Network.MyPlayer, false);
+            }
+        }
+    }
+
+    function OnChatInput(message)
+    {
+        if (message == "!seed")
+        {
+            self.PrintSeed();
+        }
+    }
+
+    function PrintSeed()
+    {
+        Game.Print("Current seed: " + self._internalSeed);
+    }
+        
+    coroutine StartGen(seed)
+    {
+        self.Width = Math.Max(self.Width, 1);
+        self.Length = Math.Max(self.Length, 1);
+        self.SupplyPercentage = Math.Clamp(self.SupplyPercentage, 0, 100);
+        self.LightPercentage = Math.Clamp(self.LightPercentage, 0, 100);
+        self.TreeWidthMin = Math.Max(self.TreeWidthMin, 0.4);
+        self.TreeHeightMin = Math.Max(self.TreeHeightMin, 0.4);
+        self.TreeWidthMax = Math.Max(self.TreeWidthMax, 0.4);
+        self.TreeHeightMax = Math.Max(self.TreeHeightMax, 0.4);
+        self.TreeSpacing = Math.Max(self.TreeSpacing, 50.0);
+        self._internalSeed = seed;
+        self._randomizer = Random(self._internalSeed);
+        self._borderWidth = self.Width * self.TreeSpacing / 10.0 + self._barrierMargin;
+        self._borderLength = self.Length * self.TreeSpacing / 10.0 + self._barrierMargin;
+        self._treePositions = List();
+        self._treeSizes = List();
+
+        self.CacheObjects();
+        wait 0.0;
+        self.SetupGround();
+        wait 0.0;
+        self.SetupBarrier();
+        wait 0.0;
+        self.GenerateTrees();
+        wait 0.0;
+        self.GenerateProps();
+        wait 0.0;
+        self.CreateTitanSP();
+        wait 0.0;
+        self.GenerateFX();
+
+        wait 0.0;
+        self._finishedGeneration = true;
+        Game.SpawnTitansAsync("Default", self._titanLimit);
+    }
+    
+    function SetupGround()
+    {
+        x = self._borderWidth;
+        z = self._borderLength;
+        textureScale = 1.0;
+        texture = "Grass5";
+        if (self.ForestType == "Classic")
+        {
+            textureScale = 3.0;
+        }
+        elif (self.ForestType == "Dead")
+        {
+            texture = "Dirt1";
+            textureScale = 2;
+        }
+        elif (self.ForestType == "Type_a")
+        {
+            texture = "Grass4";
+            textureScale = 3.0;
+        }
+        elif (self.ForestType == "Type_b")
+        {
+            texture = "Grass6";
+            textureScale = 2;
+        }
+        
+        tx = (x / 4.0) / textureScale;
+        ty = (z / 4.0) / textureScale;
+        Map.CreateMapObjectRaw("Scene,Geometry/Cuboid,0,0,1,1,1,0,Ground,0,-25,0,0,0,0," + x + ",5," + z + ",Physical,Entities,Default,Basic|172/174/166/255|Nature/" + texture + "|" + tx + "/" + ty + "|0/0,");
+    }
+
+    function SetupBarrier()
+    {
+        if (self.DisableBarrier == true)
+        {
+            return;
+        }
+        W = self._borderWidth;
+        L = self._borderLength;
+        Map.CreateMapObjectRaw("Scene,Geometry/Cuboid,0,0,1,1,0,0,Barrier," + (W*5) + ",1000," + 0 + ",0,0,0," + 1 + ",2000," + L + ",Physical,Characters,Default,Default|255/0/0/255,");
+        Map.CreateMapObjectRaw("Scene,Geometry/Cuboid,0,0,1,1,0,0,Barrier," + (0-W*5) + ",1000," + 0 + ",0,0,0," + 1 + ",2000," + L + ",Physical,Characters,Default,Default|255/0/0/255,");
+        Map.CreateMapObjectRaw("Scene,Geometry/Cuboid,0,0,1,1,0,0,Barrier," + 0 + ",1000," + (L*5) + ",0,0,0," + W + ",2000," + 1 + ",Physical,Characters,Default,Default|255/0/0/255,");
+        Map.CreateMapObjectRaw("Scene,Geometry/Cuboid,0,0,1,1,0,0,Barrier," + 0 + ",1000," + (0-L*5) + ",0,0,0," + W + ",2000," + 1 + ",Physical,Characters,Default,Default|255/0/0/255,");
+        Map.CreateMapObjectRaw("Scene,Geometry/Cuboid,0,0,1,1,0,0,Barrier,0,2000,0,0,0,0," +  W  + ",1," +  L  + ",Physical,Characters,Default,Default|255/0/0/255,");
+    }
+
+    function GenerateTrees()
+    {
+        for (i in Range(0, self.Width, 1))
+        {
+            for (j in Range(0, self.Length, 1))
+            {                
+                # scale
+                scaleW = self._randomizer.RandomFloat(self.TreeWidthMin, self.TreeWidthMax);
+                scaleH = self._randomizer.RandomFloat(self.TreeHeightMin, self.TreeHeightMax);                
+                self._treeSizes.Add(Vector3(scaleW, scaleH, scaleW));
+
+                # position
+                spacing = self.TreeSpacing;
+                x = ((i - self.Width / 2) * spacing) + (spacing / 2);
+                z = ((j - self.Length / 2) * spacing) + (spacing / 2);
+                
+                # Add randomness to position
+                maxSpacing = spacing - scaleW/2;
+                x += self._randomizer.RandomFloat(0-0.5,0.5) * maxSpacing;
+                z += self._randomizer.RandomFloat(0-0.5,0.5) * maxSpacing;
+                self._treePositions.Add(Vector3(x, 0, z));
+            }
+        }
+
+        # Tree types
+        treeName1 = "Tree12";
+        treeName2 = "Tree11";
+        TreeOffset1 = Vector3.Zero;
+        TreeOffset2 = Vector3(0,0,14);
+        
+        if (self.ForestType == "Classic")
+        {
+            treeName1 = "Tree2b";
+            treeName2 = "Tree2c";
+            TreeOffset1 = Vector3.Zero;
+            TreeOffset2 = Vector3.Zero;
+        }
+        elif (self.ForestType == "Dead")
+        {
+            treeName1 = "Tree4";
+            treeName2 = "Tree4";
+            TreeOffset1 = Vector3(0,63,0);
+            TreeOffset2 = Vector3(0,63,0);
+        }
+        elif (self.ForestType == "Type_a")
+        {
+            treeName1 = "Tree7";
+            treeName2 = "Tree6";
+            TreeOffset1 = Vector3(0,70,0);
+            TreeOffset2 = Vector3(0,70,0);
+        }
+        elif (self.ForestType == "Type_b")
+        {
+            treeName1 = "Tree1";
+            treeName2 = "Tree3";
+            TreeOffset1 = Vector3.Zero;
+            TreeOffset2 = Vector3(0,95,0);
+        }
+
+        for (i in Range(0, self._treePositions.Count, 1))
+        {       
+            TreePos = self._treePositions.Get(i);
+            treeScale = self._treeSizes.Get(i);
+            
+            treeName = treeName1;
+            finalOffset = TreeOffset1;
+            if (self._randomizer.RandomFloat(0, 100) > 65)
+            {
+                treeName = treeName2;
+                finalOffset = TreeOffset2;
+            }
+            
+            treeAngle = self.RandomAngle();
+            tree = Map.CreateMapObjectRaw("Scene,Nature/" + treeName + ",0,0,1,1,1,0,Tree," + TreePos.X + "," + TreePos.Y + "," + TreePos.Z + ",0," + treeAngle + ",0," + treeScale.X + "," + treeScale.Y + "," + treeScale.Z + ",Physical,Entities,Default,Default|255/255/255/255,");
+            tree.Position = tree.Position + (tree.Right * finalOffset.X * treeScale.X);
+            tree.Position = tree.Position + (tree.Up * finalOffset.Y * treeScale.Y);
+            tree.Position = tree.Position + (tree.Forward * finalOffset.Z * treeScale.Z);
+        }   
+    }
+
+    function CreateTitanSP()
+    {
+        for (i in Range(0, self._treePositions.Count, 1))
+        {
+            TreePos = self._treePositions.Get(i);
+            scale = self._treeSizes.Get(i).Z * 10;
+            pos = self.RandomPositionNearby(TreePos.X, 0, TreePos.Z, scale + 20, scale + 50);
+            self.CreateCacheObject(self._baseSpawnPointT, pos, Vector3(0, self.RandomAngle(), 0), false);
+        }
+        
+    }
+
+    function GenerateFX()
+    {
+        if (self.ExtraDetails == false)
+        {
+            return;
+        }
+        
+        fallingLeaves = "FallingLeavesFX1";
+        foliages = List();
+        foliageScale = Vector3(3,3,3);
+        fallingLeavesDensity = 70;
+        
+        if (self.ForestType == "Default")
+        {
+            foliages.Add("FX/FoliageGenerator3");
+            foliages.Add("FX/FoliageGenerator4");
+            foliages.Add("FX/FoliageGenerator5");
+            foliages.Add("FX/FoliageGenerator6");
+            foliages.Add("FX/FoliageGenerator7");
+            foliages.Add("Nature/Field4");
+            foliages.Add("Nature/Field4");
+        }
+        elif (self.ForestType == "Classic")
+        {
+            foliages.Add("FX/FoliageGenerator3");
+            foliages.Add("FX/FoliageGenerator4");
+            foliages.Add("FX/FoliageGenerator5");
+            foliages.Add("FX/FoliageGenerator6");
+            foliages.Add("FX/FoliageGenerator7");
+        }
+        elif (self.ForestType == "Dead")
+        {
+            fallingLeavesDensity = 40;
+            foliageScale = Vector3(1,1,1);
+            fallingLeaves = "HazeFX1";
+            foliages.Add("Nature/Boulder2");
+            foliages.Add("Nature/Boulder3");
+            foliages.Add("Nature/Boulder4");    
+            foliages.Add("Nature/Boulder5");
+        }
+        elif (self.ForestType == "Type_a")
+        {
+            fallingLeavesDensity = 30;
+            foliageScale = Vector3(3.4,2.5,3.4);
+            fallingLeaves = "FallingLeavesFX1a";
+            foliages.Add("FX/FoliageGenerator3");
+            foliages.Add("FX/FoliageGenerator1");
+            foliages.Add("FX/FoliageGenerator6");
+            foliages.Add("Nature/Field3");
+            foliages.Add("Nature/Field4a");
+            foliages.Add("Nature/Field4b");
+        }
+        elif (self.ForestType == "Type_b")
+        {
+            fallingLeavesDensity = 15;
+            foliageScale = Vector3(3,2,3);
+            fallingLeaves = "ButterflyFX1";
+            foliages.Add("Nature/Fern1");
+            foliages.Add("Nature/Fern1a");
+            foliages.Add("Nature/Fern1b");
+            foliages.Add("Nature/Fern1c");
+            foliages.Add("Nature/Field2");
+            foliages.Add("Nature/Field4c");
+        }
+        
+        for (i in Range(0, self._treePositions.Count, 1))
+        {       
+            TreePos = self._treePositions.Get(i);
+            treeScale = self._treeSizes.Get(i);
+            treeWidth = treeScale.Z * 10;
+
+            # falling leaves
+            if (self._randomizer.RandomFloat(0, 100) < fallingLeavesDensity)
+            {
+                folPos = self.RandomPositionNearby(TreePos.X, self._randomizer.RandomFloat(33.0, 99.9), TreePos.Z, treeWidth, treeWidth + 30);
+                Map.CreateMapObjectRaw("Scene,FX/" + fallingLeaves + ",0,0,1,0,1,0,FallingLeavesFX1," + folPos.X + "," + folPos.Y + "," + folPos.Z + ",0," + self.RandomAngle() + ",0,2.5,3.5,4.7,None,Entities,Default,DefaultNoTint|255/255/255/255,"); 
+            
+            }
+    
+            # foliage
+            if (self._randomizer.RandomFloat(0, 100) > 60)
+            {
+                pos = self.RandomPositionNearby(TreePos.X, 0, TreePos.Z, treeWidth + 20, treeWidth + 90);
+                foliageType = self.RandomFromList(foliages);
+                foliageCount = self._randomizer.RandomInt(0, 3);
+                k = 0;
+                while (k < foliageCount)
+                {
+                    folPos = self.RandomPositionNearby(pos.X, 0, pos.Z, k * 11, k * 9);
+                    Map.CreateMapObjectRaw("Scene," + foliageType + ",0,0,1,0,1,0,Grass," + folPos.X + ",0," + folPos.Z + ",0," + self.RandomAngle() + ",0," + foliageScale.X + "," + foliageScale.Y + "," + foliageScale.Z + ",None,Entities,Default,DefaultNoTint|255/255/255/255,");    
+                    k += 1;
+                }
+            }
+        }
+        
+        angle = self.RandomAngle();
+        dist = Math.Max(self.Width, self.Length) * 100;
+        pos = Vector3(Math.Sin(angle) * dist, 400, Math.Cos(angle) * dist);
+        Map.CreateMapObjectRaw("Scene,FX/BirdsFX1,0,0,1,0,1,0,BirdsFX1," + pos.X + "," + pos.Y + "," + pos.Z + ",0," + (angle+180) + ",0,2.5,3.5,4.7,None,Entities,Default,DefaultNoTint|255/255/255/255,"); 
+    }
+
+    function GenerateProps()
+    {
+        treeCount = self._treePositions.Count;
+        supplyCount = Math.Ceil(treeCount * self.SupplyPercentage / 100.0);
+        lightCount = Math.Ceil(treeCount * self.LightPercentage / 100.0);
+
+        # contains all trees that already have a prop
+        usedTrees = List();
+        
+        # supply
+        i = 0;
+        while (i < supplyCount)
+        {
+            ind = self._randomizer.RandomInt(0, self._treePositions.Count);
+            tree = self._treePositions.Get(ind);
+            contains = self.Contains(usedTrees, tree);
+
+            if (contains == false)
+            {
+                treeSize = self._treeSizes.Get(ind);
+                height = self._randomizer.RandomFloat(20, 80 * treeSize.Y);
+                angle = self.RandomAngle() + 90;
+
+                # added a small offset to supplyDist so it gets spawned inside trees less often
+                supplyDist = 10 * treeSize.Z + (treeSize.Z - 1);
+                spawnDist = 15 * treeSize.Z + (treeSize.Z - 1);
+                supplyOffset = Vector3(Math.Sin(angle) * supplyDist, 0, Math.Cos(angle) * supplyDist);
+                spawnOffset = Vector3(Math.Sin(angle) * spawnDist, 0, Math.Cos(angle) * spawnDist);
+                
+                self.CreateCacheObject(self._baseSupply, Vector3(tree.X + supplyOffset.X, height + 17 * treeSize.Y, tree.Z + supplyOffset.Z), Vector3(0, angle + 180, 0), false);
+                self.CreateCacheObject(self._baseSpawnPointH, Vector3(tree.X + spawnOffset.X, height + 17 * treeSize.Y, tree.Z + spawnOffset.Z), Vector3(0, angle, 0), false);
+                supply = self.CreateCacheObject(self._baseSupplyStand, Vector3(tree.X, height, tree.Z), Vector3(0, angle, 0), true);
+                supply.Scale = Vector3.Multiply(treeSize, Vector3(1.5, 1, 1.5));
+                
+                usedTrees.Add(tree);
+                i += 1;   
+            }
+        }
+    
+        usedTrees.Clear();
+        
+        # lights
+        j = 0;
+        while (j < lightCount)
+        {
+            ind = self._randomizer.RandomInt(0, self._treePositions.Count);
+            tree = self._treePositions.Get(ind);
+            contains = self.Contains(usedTrees, tree);
+
+            if (contains == false)
+            {
+                treeSize = self._treeSizes.Get(ind);
+                height = self._randomizer.RandomFloat(10, 60 * treeSize.Y);
+                angle = self.RandomAngle();
+                dist = 10.5 * treeSize.Z;
+                self.CreateCacheObject(self._baseLamp, Vector3(tree.X + Math.Sin(angle) * dist, height - 6, tree.Z + Math.Cos(angle) * dist), Vector3(0,angle + 180,0), true);
+                
+                usedTrees.Add(tree);
+                j += 1;
+            }
+        }
+    }
+        
+    function CreateCacheObject(original,position,rotation,haschildren)
+    {
+        newObject = Map.CopyMapObject(original, haschildren);
+        newObject.Position = position;
+        newObject.Rotation = rotation;
+        newObject.Active = true;
+        
+        return newObject;
+    }
+
+    function CacheObjects()
+    {
+        self._baseSupplyStand = Map.FindMapObjectByName("SupplyPlatform");
+        self._baseSupply = Map.FindMapObjectByName("Supply");
+        self._baseLamp = Map.FindMapObjectByName("LampStand");
+        self._baseSpawnPointT = Map.FindMapObjectByName("SpawnPointT");
+        self._baseSpawnPointH = Map.FindMapObjectByName("SpawnPointH");
+    }
+
+    function RandomPositionNearby(x,y,z,minDist,maxDist)
+    {
+        a = self.RandomAngle();
+        dist = self._randomizer.RandomFloat(minDist, maxDist);
+        return Vector3(x + Math.Sin(a) * dist, y, z + Math.Sin(a) * dist);
+    }
+
+    function RandomAngle()
+    {
+        return self._randomizer.RandomFloat(0, 360);
+    }
+
+    function RandomFromList(list)
+    {
+        return list.Get(self._randomizer.RandomInt(0,list.Count));
+    }
+
+    # temporary until List.Contains is fixed
+    function Contains(list, obj)
+    {
+        for (element in list)
+        {
+            if (element == obj)
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+}

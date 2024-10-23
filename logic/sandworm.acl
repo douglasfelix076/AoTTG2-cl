@@ -1,0 +1,1442 @@
+    # (TO-DO) fix the "follow" state
+
+    class Main
+    {
+        WalkingSpeed = 200;
+        worm = null;
+
+        function OnGameStart()
+        {
+            self.worm = Map.FindMapObjectByName("sandworm").GetComponent("Worm");
+            self.WalkingSpeed = Math.Clamp(self.WalkingSpeed, -1, 1000);
+            Game.SetPlaylist("Battle");
+            #self.SetSong();
+            #Time.TimeScale = 0.1;
+        }
+        
+        function OnPlayerSpawn(player, character)
+        {
+            return;
+            if (self.WalkingSpeed != -1)
+            {
+                if (character.Type == "Human")
+                {
+                    character.Speed = self.WalkingSpeed;
+                }
+            }
+        }
+
+        function SetSong()
+        {
+            Game.SetSong("Nadim-Doueiri_Sunset-Squad");
+        }
+        
+        function OnChatInput(message)
+        {
+            if (String.StartsWith(message, "!"))
+            {
+                args = String.Split(String.Substring(message, 1), " ");
+                command = args.Get(0);
+                if (command == "titan" || command == "t")
+                {
+                    if (args.Count == 2)
+                    {
+                        self.RandomTitan(Convert.ToInt(args.Get(1)));
+                    }
+                    else
+                    {
+                        self.RandomTitan(1);
+                    }
+                }
+                elif (command == "titans" || command == "t2")
+                {
+                    self.RandomTitan(10);
+                }
+                elif (command == "eff")
+                {
+                    Game.SpawnEffect(args.Get(1), Network.MyPlayer.Character.Position, Network.MyPlayer.Character.Rotation, 0.1);
+                }
+                elif (command == "time")
+                {
+                    Time.TimeScale = Convert.ToFloat(args.Get(1));
+                }
+                elif (command == "toggleatt" || command == "toggle")
+                {
+                    self.worm.CanAttack = !self.worm.CanAttack;
+                    if (self.worm.CanAttack)
+                    {
+                        Game.Print("<color=black>attacks disabled</color>");
+                    }
+                    else
+                    {
+                        Game.Print("<color=black>attacks enabled</color>");
+                    }
+                }
+                elif (command == "att" || command == "a")
+                {
+                    target = self.worm.GetTarget();
+                    if (target != null)
+                    {
+                        self.worm.Attack(target);
+                    }
+                }
+                elif (command == "follow" || command == "f")
+                {
+                    target = self.worm.GetTarget();
+                    if (target != null)
+                    {
+                        self.worm.Follow(target, 10);
+                    }
+                }
+                elif (command == "fr")
+                {
+                    self.worm._path = null;
+                }
+                elif (command == "idle")
+                {
+                    self.worm.Idle();
+                }
+                elif (command == "trail")
+                {
+                    self.worm.StartTrail();
+                }
+                elif (command == "tt")
+                {
+                    self.RandomTitan(20);
+                    self.worm.StartTrail();
+                }
+                elif (command == "dmg")
+                {
+                    self.worm.OnDamage("damage", null, Network.MyPlayer.Name, Random.RandomInt(10, 500), "Thunderspear");
+                }
+                elif (command == "annie")
+                {
+                    a = Random.RandomFloat(0,3000);
+                    dir = Vector3(Math.Cos(a), 0, Math.Sin(a)) * Random.RandomFloat(0, 500);
+                    Game.SpawnShifterAt("Annie", dir);
+                }
+            }
+        }   
+
+        function RandomTitan(count)
+        {
+            for(i in Range(0, count, 1))
+            {
+                a = Random.RandomFloat(0,3000);
+                dir = Vector3(Math.Cos(a), 0, Math.Sin(a)) * Random.RandomFloat(0, 500);
+                Game.SpawnTitanAt("Default", dir);
+            }
+        }
+    }
+
+    component WormRegion
+    {
+        Name = "Region";
+        _main = null;
+
+        function Init()
+        {
+            self._main = self.MapObject.Parent.GetComponent("Worm");
+            if (self._main == null)
+            {
+                Game.Print("Region " + self.Name + " is not parented correctly");
+            }
+        }
+
+        function OnCollisionEnter(other)
+        {
+            #Game.Print(self.Name + " enter: " + other.Name);
+            self._main.OnRegion(self.Name, "enter", other);
+        }
+
+        function OnCollisionStay(other)
+        {
+            self._main.OnRegion(self.Name, "stay", other);
+        }
+
+        function OnCollisionExit(other)
+        {
+            #Game.Print(self.Name + " exit: " + other.Name);
+            self._main.OnRegion(self.Name, "exit", other);
+        }
+
+        function OnGetHit(character, name, damage, type)
+        {
+            self._main.OnDamage(self.Name, character, name, damage, type);
+        }
+    }
+
+    component RockGenerator
+    {
+        Enabled = true;
+        Timer = 0.2;
+        LifeTime = 1.0;
+        StartTime = 0.4;
+        MinDistance = 0;
+        MaxDistance = 1;
+        MinScale = 3;
+        MaxScale = 5;
+        _baseRock = null;
+        _baseRockDmg = null;
+        _currentTime = 0.0;
+
+        # object pooling
+        _pool = List();
+        _poolDmg = List();
+
+        function OnTick()
+        {
+            if (self.Enabled)
+            {
+                if (self._currentTime <= 0.0)
+                {
+                    pos = self.MapObject.Position;
+                    a = Random.RandomFloat(0,360);
+                    dir = Vector3(Math.Cos(a), 0, Math.Sin(a));
+                    vector = pos + dir * Random.RandomFloat(self.MinDistance, self.MaxDistance);
+                    scale = Vector3(1,1,1) * Random.RandomFloat(self.MinScale, self.MaxScale);
+
+                    self.CreateRock(vector, scale, Vector3.Zero, self.LifeTime, self.StartTime, false, false);
+                    self._currentTime = self.Timer;
+                }
+                else
+                {
+                    self._currentTime -= Time.TickTime;
+                }
+            }
+
+            #Game.Print("<color=black>count1: " + self._pool.Count + ", count2: " + self._poolDmg.Count + "</color>");
+        }
+
+        function Init()
+        {
+            self._baseRock = Map.FindMapObjectByName("RockProp");
+            self._baseRockDmg = Map.FindMapObjectByName("RockPropDmg");
+        }
+
+        function CreateRock(position, scale, speed, lifetime, starttime, useGravity, damage)
+        {
+            newRock = self.GetRock(damage);
+            rock = newRock.GetComponent("Rock");
+            rock.Start(lifetime, starttime, position, scale, useGravity);
+            rock.AddForce(speed);
+        }
+
+        function GetRock(damage)
+        {
+            if (damage)
+            {
+                for(rock in self._poolDmg)
+                {
+                    if (rock.Active == false)
+                    {
+                        return rock;
+                    }
+                }
+                newRock = Map.CopyMapObject(self._baseRockDmg, false);
+                self._poolDmg.Add(newRock);
+                return newRock;
+            }
+            else
+            {
+                for(rock in self._pool)
+                {
+                    if (rock.Active == false)
+                    {
+                        return rock;
+                    }
+                }
+                newRock = Map.CopyMapObject(self._baseRock, false);
+                self._pool.Add(newRock);
+                return newRock;
+            }
+        }
+    }
+
+    component Rock
+    {
+        _lifeTime = 1.0;
+        _startTime = 0.4;
+        _scale = Vector3(1,1,1);
+        _startRotation = Vector3.Zero;
+        _speed = Vector3.Zero;
+        _hasGravity = false;
+
+        function OnTick()
+        {
+            if (self.MapObject.Active)
+            {
+                if (self._hasGravity)
+                {
+                    self.AddForce(Vector3.Down);
+                }
+
+                self.MapObject.Position = self.MapObject.Position + (self._speed * Time.TickTime);
+            }
+        }
+
+        function Start(life, startTime, position, scale, gravity)
+        {
+            self._lifeTime = life;
+            self._startTime = startTime;
+            self._scale = scale;
+            self.MapObject.Scale = Vector3.Zero;
+            self.MapObject.Position = position;
+            self._hasGravity = gravity;
+            self.MapObject.Rotation = Vector3(Random.RandomFloat(0, 360), Random.RandomFloat(0, 360), Random.RandomFloat(0, 360));
+            
+            self.MapObject.Active = true;
+            self.LifeCycle();
+        }
+
+        coroutine LifeCycle()
+        {
+            if (self._startTime > 0)
+            {
+                while (self.MapObject.Scale.X < self._scale.X)
+                {
+                    self.MapObject.Scale = self.MapObject.Scale + self._scale * Time.FrameTime / self._startTime;
+                    wait 0.0;
+                }
+            }
+            self.MapObject.Scale = self._scale;
+            wait self._lifeTime;
+            while (self.MapObject.Scale.X > 0)
+            {
+                self.MapObject.Scale = self.MapObject.Scale - self._scale * Time.FrameTime;
+                wait 0.0;
+            }
+
+            self.MapObject.Active = false;
+        }
+
+        function AddForce(vector)
+        {
+            self._speed += vector;
+        }
+    }
+
+    component WormSegment
+    {
+        _parentSegment = null;
+        _grabHumans = Dict();
+
+        function OnTick()
+        {
+            if (self._parentSegment != null)
+            {
+                targetPos = self._parentSegment.Position - self._parentSegment.Forward * 40;
+                lastPos = self.MapObject.Position - self.MapObject.Forward * 40;
+                self.MapObject.Position = targetPos;
+                self.MapObject.Forward = targetPos - lastPos;
+                self.MapObject.Rotation = QuaternionX.LookRotation(self.MapObject.Forward, Vector3.Slerp(self.MapObject.Up, self._parentSegment.Up, Time.TickTime * 20)).Euler;
+            }
+            
+            for(human in self._grabHumans.Keys)
+            {
+                pos = self._grabHumans.Get(human);
+
+                human.Position = self.MapObject.Transform.TransformPoint(pos);
+                human.Rotation = QuaternionX.LookRotation(self.MapObject.Forward,  self.MapObject.Up).Euler;
+                human.AddForce(human.Velocity * (0-1));
+            }
+        }
+
+        function OnFrame()
+        {
+            distance = 40;
+            if (Network.MyPlayer.Character != null && (Network.MyPlayer.Character.Position - self.MapObject.Position).Magnitude <= distance)
+            {
+                if (Input.GetKeyDown("Interaction/Interact"))
+                {
+                    contains = DictX.ContainsKey(self._grabHumans, Network.MyPlayer.Character);
+                    if (contains)
+                    {
+                        self._grabHumans.Remove(Network.MyPlayer.Character);
+                        #Network.MyPlayer.Character.Velocity = self.MapObject.
+                        Camera.SetFOV(0);
+                    }
+                    else
+                    {
+                        self._grabHumans.Set(Network.MyPlayer.Character, self.MapObject.Transform.InverseTransformPoint(Network.MyPlayer.Character.Position));
+                        Camera.SetFOV(100);
+                    }
+                }
+            }
+        }
+    }
+
+    component Worm
+    {
+        SegmentCount = 10;
+        KillMessage = "Worm";
+        Speed = 100;
+        MaxHealth = 2000;
+        CanAttack = true;
+        _health = 0;
+        _segments = List();
+        _oldPos = Vector3.Zero;
+        _path = null;
+        _pathName = "";
+        _pathPosition = 0.0;
+        _moveSpeed = 0;
+        _state = "none";
+        _rigidbody = null;
+        _undergroundWalls = List();
+        _updateUnderground = false;
+        _rockGenerator = null;
+        _teethOrigin = null;
+        _titan = null;
+        _target = null;
+        _grabTarget = null;
+        _grounded = true;
+        _debug = true;
+        _debugPoints = List();
+        _idlingCount = 5;
+        _trailTargets = List();
+        _willAttack = false;
+        _isDead = false;
+        _followTime = 0.0;
+        _followJump = false;
+        
+        function Init()
+        {
+            self._moveSpeed = self.Speed;
+            self._rockGenerator = self.MapObject.GetChild("RockGenerator").GetComponent("RockGenerator");
+            self._teethOrigin = self.MapObject.GetChild("FangsOrigin");
+            #self._rigidbody = self.MapObject.GetChild("WormHead_Joint").GetComponent("Rigidbody");
+            
+            # this titan is used for the minimap icon and possibly healthbar
+            self._titan = Game.SpawnTitanAt("Normal", self.MapObject.Position);
+            self.TitanWait();
+            
+            middleBody = self.MapObject.GetChild("WormBody");
+            #middleBody.Position = self.MapObject.Position - self.MapObject.Forward * 40;
+            middleBody.Active = true;
+            middleBody.GetComponent("WormSegment")._parentSegment = self.MapObject;
+            middleBody.Parent = null;
+            self._segments.Add(middleBody);
+            current = middleBody;
+            
+            for(i in Range(1, self.SegmentCount, 1))
+            {
+                newSeg = Map.CopyMapObject(middleBody, true);
+                newSeg.Position = current.Position - self.MapObject.Forward * 40;
+                newSeg.Active = true;
+                newSeg.GetComponent("WormSegment")._parentSegment = current;
+                self._segments.Add(newSeg);
+                current = newSeg;
+            }
+            
+            for(obj in Map.FindMapObjectsByTag("Underground"))
+            {
+                self._undergroundWalls.Add(obj);
+            }
+
+            if (self._debug == true)
+            {
+                for(i in Range(0, 60, 1))
+                {
+                    self._debugPoints.Add(Map.CreateMapObjectRaw("Scene,Geometry/Hedron1a,999,0,1,1,1,0,P1,0,0,0,0,0,0,5,5,5,Physical,Entities,Default,Default|255/0/255/255"));
+                }
+            }
+            
+            self.Idle();
+        }
+
+        coroutine TitanWait()
+        {
+            wait 0.5;
+
+            self._titan.Size = 1;
+            self._titan.MaxHealth = self.MaxHealth;
+            self._titan.Health = self.MaxHealth;
+            self._health = self.MaxHealth;
+            self._titan.Idle(9999);
+        }
+
+        function OnRegion(regionName, type, other)
+        {
+            if (regionName == "kill")
+            {
+                if (type == "enter" && other.IsCharacter && other.IsMine)
+                {                
+                    if (ListX.Contains(self._trailTargets, other))
+                    {
+                        self._trailTargets.Remove(other);
+                    }
+
+                    if (other.Type == "Human")
+                    {
+                        other.GetKilled(self.KillMessage);
+                        Game.SpawnEffect("Blood2", other.Position, Vector3.Zero, 15.0);
+                    }
+                    elif (other.Type == "Titan")
+                    {
+                        if (other == self._titan)
+                        {
+                            return;
+                        }
+
+                        if (other.Size <= 4)
+                        {
+                            other.GetKilled(self.KillMessage);
+                            other.Position = Vector3.Down * 1000; # move the titan down so it disappears
+                            Game.SpawnEffect("Blood2", (other.NapePosition + other.Position) / 2, Vector3.Zero, (10.0 + other.Size) * 2);
+                        }
+                        elif (self._grabTarget == null)
+                        {
+                            self.NetworkView.SendMessageAll("grab|" + other.ViewID);
+                            other.GetKilled(self.KillMessage);
+                            Game.SpawnEffect("Blood2", other.NapePosition, Vector3.Zero, (10.0 + other.Size) * 2);
+                        }
+                    }
+                    elif (other.Type == "Shifter")
+                    {
+                        self.NetworkView.SendMessageAll("grab|" + other.ViewID);
+                        other.GetKilled(self.KillMessage);
+                        Game.SpawnEffect("Blood2", other.NapePosition, Vector3.Zero, 20.0);
+                    }
+                }
+            }
+        }
+
+        function Die()
+        {
+            self._isDead = true;
+            #self._rigidbody.FreezeRotation = false;
+            #self._rigidbody.SetVelocity(self.MapObject.Position - self._oldPos);
+            UI.SetLabel("MiddleCenter", "<color=white><size=30><b>the worm is fucking dead</b></size></color>" + String.Newline + "Game win.");
+            Game.End(10.0);
+        }
+
+        function OnDamage(regionName, character, name, damage, type)
+        {
+            #Game.Print(name);
+            #Game.Print(type);
+            Game.PrintAll("<color=black>" + name + " did " + Convert.ToString(damage) + " damage!</color>");
+            
+            # only damage the titan if it doesn't kill it
+            if (self._titan.Health > damage)
+            {
+                self._titan.GetDamaged(name, damage);
+            }
+            else
+            {
+                self.Die();
+            }
+        }
+
+        function OnNetworkMessage(sender, message)
+        {
+            args = String.Split(message, "|");
+            name = args.Get(0);
+
+            if (name == "grab")
+            {
+                viewid = Convert.ToInt(args.Get(1));
+                target = Game.FindCharacterByViewID(viewid);
+                if (target != null)
+                {
+                    self._grabTarget = target;
+                }
+            }
+        }
+
+        function OnTick()
+        {
+            #UI.SetLabel("MiddleCenter", "<color=black>state: " + self._state + "</color>");
+
+            if (self._isDead == true)
+            {
+                return;
+            }
+
+            self.GroundWalls();
+            self.GroundTrigger();
+
+            if (self._grounded == true)
+            {
+                currentPosition = self.MapObject.Position;
+                self._rockGenerator.MapObject.Position = self.ResetY(currentPosition);
+                
+                # make the rocks bigger when closer to the surface
+                distance = (currentPosition - self._rockGenerator.MapObject.Position).Magnitude / 600;
+                scale = 1 - Math.Clamp(distance, 0.1, 0.8);
+                self._rockGenerator.MinScale = scale * 30;
+                self._rockGenerator.MaxScale = scale * 40;
+                self._rockGenerator.Timer = 0.1/scale;
+
+                if (self._target == null)
+                {
+                    # if any shifter uses the roar emote
+                    for(shifter in Game.Shifters)
+                    {
+                        if (shifter.CurrentAnimation == "ErenRig_VER2|et_born" || shifter.CurrentAnimation == "Armature_FemT|ft_mad1")
+                        {
+                            self.Attack(shifter);
+                        }
+                    }
+                }
+            }
+
+            if (self._oldPos != self.MapObject.Position - self.MapObject.Forward * 20)
+            {
+                self._oldPos = self.MapObject.Position - self.MapObject.Forward * 20;
+            }
+
+            if (self._state == "follow")
+            {
+                if (self._target != null)
+                {
+                    distance = self.ResetY(self.MapObject.Position - self._target.Position).Magnitude;
+                    
+                    if (self._followJump == true)
+                    {
+                        if (distance > 130)
+                        {
+                            direction = ((self.ResetY(self._target.Position) + Vector3.Down * 200) - self.MapObject.Position).Normalized;
+                            self.MapObject.Forward = Vector3.Slerp(self.MapObject.Forward, direction, Time.TickTime * 10);
+                            self.MapObject.Position = self.MapObject.Position + self.MapObject.Forward * Time.TickTime * self._moveSpeed;
+                        }
+                        else
+                        {
+                            self._followJump = false;
+                            self._state = "ascend";
+                            self.MoveToPoint(self.ResetY(self._target.Position) + Vector3.Down * 60, Vector3.Down * 200, false);
+                        }
+                    }
+                    else
+                    {
+                        if (distance > 130 && self._followTime > 0.0)
+                        {
+                            direction = ((self.ResetY(self._target.Position) + Vector3.Down * 200) - self.MapObject.Position).Normalized;
+                            self.MapObject.Forward = Vector3.Slerp(self.MapObject.Forward, direction, Time.TickTime * 10);
+                            self.MapObject.Position = self.MapObject.Position + self.MapObject.Forward * Time.TickTime * self._moveSpeed;
+                            self._followTime = self._followTime - Time.TickTime;
+                        }
+                        else
+                        {
+                            self._state = "idle";
+                            self.MoveToPoint(self.MapObject.Forward * 20 + Vector3.Down * 200, (0-1) * self.MapObject.Forward * 40);
+                        }
+                    }
+                }
+                else
+                {
+                    self._state = "idle";
+                    self.MoveToPoint(self.MapObject.Forward * 20 + Vector3.Down * 200, (0-1) * self.MapObject.Forward * 40);
+                }
+            }
+
+            if (self._path != null)
+            {
+                self.MapObject.Position = self._path.Evaluate(self._pathPosition) + self.MapObject.Forward * 20;
+                self._pathPosition += Time.TickTime * self._moveSpeed;
+                
+                if (self._pathPosition >= self._path.TotalLength)
+                {
+                    self.OnPathFinish();
+                }
+                #self.MapObject.Rotation = Quaternion.Lerp(Quaternion.FromEuler(self.MapObject.Rotation), QuaternionX.FromToRotation(self.MapObject.Forward, self.MapObject.Position - self._oldPos) * Quaternion.FromEuler(self.MapObject.Rotation), 10 * Time.TickTime).Euler;
+
+                self.MapObject.Forward = (self._path.Evaluate(self._pathPosition) - self._path.Evaluate(self._pathPosition - 0.1)).Normalized;
+            }
+
+            self._teethOrigin.LocalRotation = self._teethOrigin.LocalRotation + Vector3.Forward * Time.TickTime * 100;
+
+            if (self._titan != null)
+            {
+                self._titan.Position = self.MapObject.Position - self.MapObject.Forward * 40;
+            }
+        }
+
+        function GroundWalls()
+        {
+            # enable underground walls
+            if (Network.MyPlayer.Status == "Alive" && self._updateUnderground == false && Camera.Position.Y + 0.01 < 0)
+            {
+                for(obj in self._undergroundWalls)
+                {
+                    obj.Active = true;
+                }
+                self._updateUnderground = true;
+            }
+            elif (self._updateUnderground == true && Camera.Position.Y + 0.01 >= 0)
+            {
+                for(obj in self._undergroundWalls)
+                {
+                    obj.Active = false;
+                }
+                self._updateUnderground = false;
+            }
+        }
+
+        function GroundTrigger()
+        {
+            # enter/exit
+            currentPosition = self.MapObject.Position;
+            if (currentPosition.Y < 0)
+            {
+                if (self._grounded == false)
+                {
+                    self._grounded = true;
+                    self._rockGenerator.Enabled = true;
+                    
+                    if (self._state == "jump")
+                    {
+                        self.RockBurst(currentPosition);
+                    }
+                }
+            }
+            else
+            {
+                if (self._grounded == true)
+                {
+                    self._grounded = false;
+                    self._rockGenerator.Enabled = false;
+                    
+                    if (self._state == "jump")
+                    {
+                        self.RockBurst(currentPosition);
+                    }
+                }
+            }
+        }
+
+        function OnLateFrame()
+        {
+            if (self._isDead == true)
+            {
+                return;
+            }
+            else
+            {
+                #self._rigidbody.SetVelocity(Vector3.Zero);
+            }
+
+            if (self._grabTarget != null)
+            {
+                pos = self.MapObject.Position - self.MapObject.Forward * 20;
+                self._grabTarget.Up = self.MapObject.Forward;
+                if (self._grabTarget.Type == "Titan")
+                {
+                    pos = self.MapObject.Position - (self._grabTarget.NapePosition - self._grabTarget.Position);
+                }
+                self._grabTarget.Position = pos;
+                self._grabTarget.AddForce(self._grabTarget.Velocity * (0-1));
+            }
+        }
+
+        function OnSecond()
+        {
+            if (self._willAttack == true && self.CanAttack == true)
+            {
+                target = self.GetTarget();
+                if (target != null)
+                {
+                    self.Attack(target);
+                }
+            }
+        }
+
+        function OnPathFinish()
+        {
+            if (self._state == "idle")
+            {
+                #Game.Print("idle count: " + self._idlingCount);
+                if (self.CanAttack == false)
+                {
+                    self.Idle();
+                }
+                else
+                {
+                    if (self._willAttack == true)
+                    {
+                        target = self.GetTarget();
+                        if (target != null)
+                        {
+                            self.Attack(target);
+                        }
+                        else
+                        {
+                            self.Idle();
+                        }
+                    }
+                    elif (Random.RandomInt(0, self._idlingCount) <= 0)
+                    {
+                        Game.Print("att ready");
+                        self._willAttack = true;
+                        self._idlingCount = 5;
+                    }
+                    
+                }
+            }
+            elif (self._state == "starttrail")
+            {
+                self._trailTargets = self.GetTargetClose(Game.Titans, Game.Titans.Count - 1, self._titan);
+                self._trailTargets.Remove(self._titan);
+                self.Trail();
+            }
+            elif (self._state == "trail")
+            {
+                if (ListX.Contains(self._trailTargets, self._target))
+                {
+                    self._trailTargets.Remove(self._target);
+                }
+                self.Trail();
+            }
+            elif (self._state == "ascend")
+            {
+                self.Jump();
+            }
+            elif (self._state == "jump")
+            {
+                self._target = null;
+                self._moveSpeed = self.Speed;
+                self._rockGenerator.Timer = 0.1;
+                self.Idle();
+            }
+        }
+
+        function Attack(target)
+        {
+            if (self._grabTarget != null || target == null)
+            {
+                return;
+            }
+                    
+            self._willAttack = false;
+            self._target = target;
+
+            # increases the speed of the boss if the target is a shifter
+            if (target.Type == "Shifter")
+            {
+                accel = 3.5;
+                self._moveSpeed *= accel;
+                self._rockGenerator.Timer /= accel;
+            }
+            
+            distance = (self.MapObject.Position - target.Position).Magnitude;
+            if (Random.RandomBool() == true)
+            {
+                time = Random.RandomFloat(distance / 100.0, distance / 90.0);
+                self.Follow(target, time);
+            }
+            else
+            {
+                if (distance > 200 || target.Type == "Shifter")
+                {
+                    self.Follow(target, 0);
+                    self._followJump = true;
+                }
+                else
+                {
+                    self._state = "ascend";
+                    self.MoveToPoint(self.ResetY(target.Position) + Vector3.Down * Random.RandomFloat(30,60), Vector3.Down * 200, false);
+                }
+            }
+        }
+
+        function GetTargetClose(targets, count, ignore)
+        {
+            list = List();
+
+            if (targets.Count == 0)
+            {
+                return list;
+            }
+
+            point =  self.MapObject.Position;
+            newList = targets;
+
+            for(i in Range(0, count, 1))
+            {
+                closest = Util.GetClosest(point, newList, ignore);
+                list.Add(closest);
+                newList.Remove(closest);
+                point = closest.Position;
+            }
+
+            return list;
+        }
+
+        function GetTarget()
+        {
+            # will always target shifters if there is one
+            if (Game.Shifters.Count > 0)
+            {
+                return Util.GetClosest(self.MapObject.Position, Game.Shifters, null);
+            }
+
+            hasHumans = Game.Humans.Count > 0;
+            if (hasHumans)
+            {
+                # get all humans close to the ground
+                groundedHumans = List();
+                for(human in Game.Humans)
+                {
+                    if (human.Position.Y < 100)
+                    {
+                        groundedHumans.Add(human);
+                    }
+                }
+                if (groundedHumans.Count >= Game.Titans.Count - 1)
+                {
+                    return ListX.Random(groundedHumans);
+                }
+            }
+            if (Game.Titans.Count - 1 > 0)
+            {
+                pos = self.MapObject.Position;
+                closestT = Util.GetClosest(pos, Game.Titans, self._titan);
+
+                # will try to target the closest human if there is any
+                if (hasHumans)
+                {
+                    closestH = Util.GetClosest(pos, Game.Humans, null);
+                    if ((pos - closestH.Position).Magnitude < (pos - closestT.Position).Magnitude)
+                    {
+                        return closestH;
+                    }
+                }
+            
+                # else, target the closest titan
+                return closestT;
+            }
+
+            # if there are no titans, shifters and all humans are either on air or dead, return null
+            return null;
+        }
+
+        function GetRandomPosition(x, z, minrange, maxrange)
+        {
+            current = self.MapObject.Position;
+            a = Random.RandomFloat(0, 360);
+            dist = Random.RandomFloat(minrange, maxrange);
+            pos = Vector3(x + Math.Cos(a) * dist, 0-100, z + Math.Sin(a) * dist);
+            return pos;
+        }
+
+        function Idle()
+        {
+            pos = self.GetRandomPosition(0, 0, 0, 1000);
+            current = self.MapObject.Position;
+            if ((current - pos).Magnitude < 200)
+            {
+                pos += (pos - current).Normalized * (200 - (current - pos).Magnitude);
+            }
+            pos.Y = 0 - Random.RandomFloat(100,500);
+
+            # makes it choose left or right randomly
+            from = Vector3.Cross(self.MapObject.Position - pos, Vector3.Up * Random.RandomSign());
+            self.MoveToPoint(pos, from.Normalized * Random.RandomFloat(100, 300), false);
+            self._state = "idle";
+        }
+
+        function Jump()
+        {
+            currentPosition = self.MapObject.Position - self.MapObject.Forward * 20;
+            currentDirection = (currentPosition - self._oldPos);
+            currentDirection.Y = 0;
+            currentDirection = currentDirection.Normalized;
+            fallPosition = currentPosition + (currentDirection * 400);
+            fallPosition.Y = 0-100;
+            curve = Curve3D(currentPosition, Vector3.Up * 300 + (currentDirection * 40), fallPosition, Vector3.Zero - (currentDirection * 40)  + Vector3.Up * 300, 2);
+            self.StartPath(curve, false);
+            self._state = "jump";
+        }
+
+        function Trail()
+        {
+            if (self._trailTargets.Count == 0)
+            {
+                self.Idle();
+                return;
+            }
+
+            self._target = null;
+            
+            i = 0;
+            while (self._target == null)
+            {
+                self._target = self._trailTargets.Get(i);
+                if (self._target == null)
+                {
+                    self._trailTargets.RemoveAt(i);
+                }
+                i += 1;
+            }
+
+            self.MoveToPoint(self.ResetY(self._target.Position), Vector3.Zero, true);
+            self._state = "trail";
+        }
+
+        function StartTrail()
+        {
+            self.MoveToPoint(self.ResetY(self.MapObject.Position + self.MapObject.Forward * 50), Vector3.Zero, true);
+            self._state = "starttrail";
+        }
+        
+        function Follow(target, time)
+        {
+            self._followTime = time;
+            self._target = target;
+            self._path = null;
+            self._state = "follow";
+        }
+
+        function MoveToPoint(point, tg2, flat)
+        {
+            currentPosition = self.MapObject.Position - self.MapObject.Forward * 20;
+            currentDirection = (currentPosition - self._oldPos).Normalized;
+            fromTo = point - currentPosition;
+            distance = fromTo.Magnitude;
+            sign = Math.Sign(Vector3.Dot(self.MapObject.Right, fromTo));
+            tg1 = currentDirection * Random.RandomFloat(distance * 0.9, distance);  
+            if (tg2 == Vector3.Zero)
+            {
+                tg2 = currentDirection * distance;
+                if (flat == true)
+                {
+                    tg2.Y = 0;
+                }
+                sign = Math.Sign(Vector3.Dot(self.MapObject.Right, fromTo)) * distance / 2;
+                tg2 = currentDirection * 10 + (Vector3.Cross(fromTo, Vector3.Down) * sign);
+                tg2 = tg2.Normalized * Random.RandomFloat(distance * 0.9, distance);
+            }
+
+            curve = Curve3D(currentPosition, tg1, point, tg2, 2);
+            self.StartPath(curve, false);
+        }
+
+        function StartPath(curve, straighten)
+        {
+            if (self._path != null && self._pathPosition > self._path.TotalLength)
+            {
+                # this makes transition between two paths less obvious
+                self._pathPosition -= self._path.TotalLength;
+            }
+            else
+            {
+                self._pathPosition = 0.0;
+            }
+            self._path = curve;
+            
+            if (straighten)
+            {
+                direction = (curve.Evaluate(0) - curve.Evaluate(1)).Normalized;
+                self.MapObject.Forward = direction;
+                self._oldPos = (self.MapObject.Position - self.MapObject.Forward * 20) - self.MapObject.Forward;
+                
+                current = self.MapObject;
+                for(i in Range(0, self._segments.Count, 1))
+                {
+                    seg = self._segments.Get(i);
+                    seg.Position = current.Position - current.Forward * 40;
+                    seg.Forward = direction;
+                    current = seg;
+                }
+            }
+            n = self._debugPoints.Count;
+            len = self._path.TotalLength;
+            for(i in Range(0, n, 1))
+            {
+                pos = self._path.Evaluate(i * len / n);
+                self._debugPoints.Get(i).Position = pos;
+            }
+        }
+
+        function RockBurst(position)
+        {
+            Game.SpawnEffect("Boom6", position, Vector3(0, 90, 0), 10.0);
+            
+            #air
+            count = Random.RandomInt(5, 14);
+            for(i in Range(0, count, 1))
+            {
+                a = Random.RandomFloat(0, 360);
+                dir = Vector3(Math.Cos(a), 0, Math.Sin(a));
+                vec = self.MapObject.Position + dir * Random.RandomFloat(10, 20);
+                scale = Vector3(1,1,1) * Random.RandomFloat(7, 20);
+                speed = (dir + Vector3.Up * 2) * Random.RandomFloat(30, 60);
+                life = Random.RandomFloat(2, 4);
+                self._rockGenerator.CreateRock(self.ResetY(vec), scale, speed, life, 0.1, true, true);
+            }
+
+            #ground
+            count = Random.RandomInt(3, 6);
+            for(i in Range(0, count, 1))
+            {
+                a = Random.RandomFloat(0, 360);
+                dir = Vector3(Math.Cos(a), 0, Math.Sin(a));
+                vec = self.MapObject.Position + dir * Random.RandomFloat(8, 22);
+                scale = Vector3(1,1,1) * Random.RandomFloat(40, 50);
+                life = Random.RandomFloat(5, 9);
+                self._rockGenerator.CreateRock(self.ResetY(vec), scale, Vector3.Zero, life, 0.05, false, false);
+            }
+        }
+        
+        function ResetY(pos)
+        {
+            pos.Y = 0;
+            return pos;
+        }
+    }
+
+    class Spline
+    {
+        Closed = false;
+        _points = List();
+        _tangents = List();
+
+        function Init(points)
+        {
+            if (points.Count < 2)
+            {
+                Game.Print("Spline need 2 or more points to be created.");
+                return;
+            }
+
+            directions = List();
+            for(i in Range(0, points.Count - 1, 1))
+            {
+                current = points.Get(i);
+                next = points.Get(i+1);
+                fromTo = (next - current);
+                directions.Add(fromTo);
+            }
+
+            for(i in Range(0, points.Count - 1, 1))
+            {
+                current = points.Get(i);
+                next = points.Get(i+1);
+                direction = directions.Get(i);
+                _segments.Add(Curve3D(current, Vector3.Zero, next, Vector3.Zero, 2));
+            }
+        }
+    }
+
+    class Curve3D
+    {
+        P1 = Vector3.Zero;
+        P2 = Vector3.Zero;
+        T1 = Vector3.Zero;
+        T2 = Vector3.Zero;
+        _lengths = List();
+        TotalLength = 0.0;
+        Resolution = 0;
+
+        function Init(P1, T1, P2, T2, Resolution)
+        {
+            self.P1 = P1;
+            self.P2 = P2;
+            self.T1 = P1+T1;
+            self.T2 = P2+T2;
+            self.Resolution = Resolution;
+
+            self.CalculateLengths();
+        }
+
+        # 0.0 - TotalLength
+        function Evaluate(t)
+        {
+            remappedT = self.Remap(t);
+            return self.EvaluateRaw(remappedT);
+        }
+
+        # 0.0 - 1.0
+        function EvaluateNormalized(t)
+        {
+            remappedT = self.Remap(t * self.TotalLength);
+            return self.EvaluateRaw(remappedT);
+        }
+
+        # 0.0 - 1.0
+        function EvaluateRaw(t)
+        {
+            t = Math.Clamp(t, 0.0, 1.0);
+            a1 = Vector3.Lerp(self.P1, self.T1, t);
+            a2 = Vector3.Lerp(self.T1, self.T2, t);
+            a3 = Vector3.Lerp(self.T2, self.P2, t);
+            b1 = Vector3.Lerp(a1, a2, t);
+            b2 = Vector3.Lerp(a2, a3, t);
+            d = Vector3.Lerp(b1, b2, t);
+            return d;
+        }
+
+        function Remap(distance)
+        {
+            distance = Math.Max(0, Math.Min(distance, self.TotalLength));
+
+            for (i in Range(1, self._lengths.Count, 1))
+            {
+                prevLength = self._lengths.Get(i - 1);
+                currLength = self._lengths.Get(i);
+
+                if (distance <= currLength)
+                {
+                    prevT = (i - 1) / (self._lengths.Count - 1.0);
+                    nextT = i / (self._lengths.Count - 1.0);       
+
+                    lerpFactor = (distance - prevLength) / (currLength - prevLength);
+
+                    return prevT + lerpFactor * (nextT - prevT);
+                }
+            }
+
+            return 1.0;
+        }
+
+        function CalculateLengths()
+        {
+            sampleCount = Math.Max(self.Resolution * 10, 2);
+            current = self.EvaluateRaw(0.0);
+            self.TotalLength = 0.0;
+            self._lengths.Clear();
+            self._lengths.Add(0.0); 
+
+            for (i in Range(1, sampleCount, 1))
+            {
+                t = i / (sampleCount - 1.0); 
+                nextPoint = self.EvaluateRaw(t);
+                diff = (nextPoint - current).Magnitude;
+                self.TotalLength += diff;
+                self._lengths.Add(self.TotalLength);
+                current = nextPoint;
+            }
+        }
+    }
+
+    component scrollingUV
+    {
+        SpeedX = 0.0;
+        SpeedY = 0.0;
+
+        function OnTick()
+        {
+            if (self.MapObject.HasRenderer)
+            {
+                self.MapObject.TextureOffsetX = self.MapObject.TextureOffsetX + self.SpeedX * Time.TickTime;
+                self.MapObject.TextureOffsetY = self.MapObject.TextureOffsetY + self.SpeedY * Time.TickTime;
+            }
+        }
+    }
+
+    extension Util
+    {    
+        function GetClosest(point, list, ignore)
+        {
+            if (list.Count == 1)
+            {
+                return list.Get(0);
+            }
+            if (ignore != null)
+            {
+                list.Remove(ignore);
+            }
+            maxDistance = Math.Infinity;
+            closest = null;
+            for(entity in list)
+            {
+                distance = (entity.Position - point).Magnitude;
+                if (distance < maxDistance)
+                {
+                    closest = entity;
+                    maxDistance = distance;
+                }
+            }
+
+            return closest;
+        }
+    }
+
+    extension VectorX
+    {
+        function EulerToDirection(euler)
+        {
+            pitch = 0-euler.X;
+            yaw = 0-euler.Y; 
+            
+            return Vector3(Math.Cos(yaw) * Math.Cos(pitch), Math.Sin(pitch), Math.Sin(yaw) * Math.Cos(pitch));
+        }
+
+        function DirectionToEuler(direction)
+        {
+            yaw = MathX.Atan2(direction.Z, direction.X) * Math.Rad2DegConstant;
+            pitch = MathX.Atan2(direction.Y, Math.Sqrt(direction.X * direction.X + direction.Z * direction.Z)) * Math.Rad2DegConstant;
+            return Vector3(pitch, yaw, 0);
+        }
+    }
+
+    extension QuaternionX
+    {
+        function Inverse(q)
+        {
+            normSquared = q.W * q.W + q.X * q.X + q.Y * q.Y + q.Z * q.Z;
+            
+            if (normSquared > 0)
+            {
+                return Quaternion(q.W / normSquared, 0-q.X / normSquared, 0-q.Y / normSquared, 0-q.Z / normSquared);
+            }
+            return Quaternion(0, 0, 0, 0);
+        }
+
+        function LookRotationY(forward, up)
+        {
+            ztoup = self.LookRotation(up, forward * 0-1);
+            ytoz = Quaternion.FromEuler(Vector3(90, 0, 0));
+            return ztoup * ytoz;
+        }
+
+        function LookRotation(forward, up)
+        {
+            forward = forward.Normalized;
+            up = up - (forward * Vector3.Dot(up, forward));
+            up = up.Normalized;
+
+            vector = forward.Normalized;
+            vector2 = Vector3.Cross(up, vector);
+            vector3 = Vector3.Cross(vector, vector2);
+            m00 = vector2.X;
+            m01 = vector2.Y;
+            m02 = vector2.Z;
+            m10 = vector3.X;
+            m11 = vector3.Y;
+            m12 = vector3.Z;
+            m20 = vector.X;
+            m21 = vector.Y;
+            m22 = vector.Z;
+
+            num8 = (m00 + m11) + m22;
+            quaternion = Quaternion.Identity;
+            if (num8 > 0.0)
+            {
+                num = Math.Sqrt(num8 + 1.0);
+                quaternion.W = num * 0.5;
+                num = 0.5 / num;
+                quaternion.X = (m12 - m21) * num;
+                quaternion.Y = (m20 - m02) * num;
+                quaternion.Z = (m01 - m10) * num;
+                return quaternion;
+            }
+            if ((m00 >= m11) && (m00 >= m22))
+            {
+                num7 = Math.Sqrt(((1.0 + m00) - m11) - m22);
+                num4 = 0.5 / num7;
+                quaternion.X = 0.5 * num7;
+                quaternion.Y = (m01 + m10) * num4;
+                quaternion.Z = (m02 + m20) * num4;
+                quaternion.W = (m12 - m21) * num4;
+                return quaternion;
+            }
+            if (m11 > m22)
+            {
+                num6 = Math.Sqrt(((1.0 + m11) - m00) - m22);
+                num3 = 0.5 / num6;
+                quaternion.X = (m10 + m01) * num3;
+                quaternion.Y = 0.5 * num6;
+                quaternion.Z = (m21 + m12) * num3;
+                quaternion.W = (m20 - m02) * num3;
+                return quaternion;
+            }
+            num5 = Math.Sqrt(((1.0 + m22) - m00) - m11);
+            num2 = 0.5 / num5;
+            quaternion.X = (m20 + m02) * num2;
+            quaternion.Y = (m21 + m12) * num2;
+            quaternion.Z = 0.5 * num5;
+            quaternion.W = (m01 - m10) * num2;
+
+            return quaternion;
+        }
+
+        function FromToRotation(from, to)
+        {
+            from = from.Normalized;
+            to = to.Normalized;
+
+            dot = Vector3.Dot(from, to);
+
+            if (dot > 0.9999)
+            {
+                return Quaternion.Identity;
+            }
+
+            if (dot < -0.9999)
+            {
+                axis = Vector3.Cross(Vector3.Right, from);
+                if (axis.Magnitude < 0.0001)
+                {
+                    axis = Vector3.Cross(Vector3.Up, from);
+                }
+                axis = axis.Normalized;
+                return self.AngleAxis(axis, 180);
+            }
+
+            axisOfRotation = Vector3.Cross(from, to);
+            angle = Math.Acos(dot);
+            return self.AngleAxis(axisOfRotation, angle * Math.Rad2DegConstant);
+        }
+
+        function AngleAxis(axis, angleDegrees)
+        {
+            angleRadians = angleDegrees * Math.Deg2RadConstant;
+
+            halfAngle = angleRadians * 0.5;
+            sinHalfAngle = Math.Sin(halfAngle);
+            cosHalfAngle = Math.Cos(halfAngle);
+
+            return Quaternion(axis.X * sinHalfAngle, axis.Y * sinHalfAngle, axis.Z * sinHalfAngle, cosHalfAngle);
+        }
+    }
+
+    extension ListX
+    {
+        function Contains(list, obj)
+        {
+            for (element in list)
+            {
+                if (element == obj)
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        function Random(list)
+        {
+            if (list.Count == 0)
+            {
+                return null;
+            }
+            return list.Get(Random.RandomInt(0, list.Count));
+        }
+    }
+
+    extension DictX
+    {
+        function ContainsKey(dict, obj)
+        {
+            for (key in dict.Keys)
+            {
+                if (key == obj)
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        function ContainsValue(dict, obj)
+        {
+            for (val in dict.Values)
+            {
+                if (val == obj)
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
+    }
