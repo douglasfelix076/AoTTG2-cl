@@ -1,36 +1,10 @@
-extension Util
+extension Utils
 {
-    function Range(x, min, max)
-    {
-        range = max - min;
-            
-        if (range == 0)
-        {
-            return min; 
-        }
-
-        while (x > max)
-        {
-            x -= range;
-        }
-
-        while (x < min)
-        {
-            x += range;
-        }
-        
-        return x;
-    }
-
-    function GetClosest(point, list, ignore)
+    function GetClosest(point, list)
     {
         if (list.Count == 1)
         {
             return list.Get(0);
-        }
-        if (ignore != null)
-        {
-            list.Remove(ignore);
         }
         maxDistance = Math.Infinity;
         closest = null;
@@ -47,11 +21,15 @@ extension Util
         return closest;
     }
 
-    function GetClosest(point, list)
+    function GetClosestIgnore(point, list, ignore)
     {
         if (list.Count == 1)
         {
             return list.Get(0);
+        }
+        if (ignore != null)
+        {
+            list.Remove(ignore);
         }
         maxDistance = Math.Infinity;
         closest = null;
