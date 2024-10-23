@@ -1,0 +1,258 @@
+class Main
+{
+
+}
+
+component FighterJet
+{
+    Speed = 10.0;
+    RollSpeed = 2.0;
+    PitchSpeed = 2.0;
+    YawSpeed = 2.0;
+    MaxSpeed = 100.0;
+    MaxTurn = 20.0;
+    TurnDeccel = 0.1;
+    LightSpeedMin = 700.0;
+
+    _rigidbody = null;
+    _driver = null;
+    _collidingHuman = null;
+    _accel = 0.0;
+    _roll = 0.0;
+    _pitch = 0.0;
+    _yaw = 0.0;
+    _lsJitter = 0.0;
+    _lightspeedParticle = List();
+    _thrusters = List();
+
+    function Init()
+    {
+        self.MapObject.AddSphereCollider("Region", "Characters", Vector3.Zero, 10.0);
+        self._rigidbody = self.MapObject.GetComponent("Rigidbody");
+        self._lightspeedParticle.Add(self.MapObject.Transform.GetTransform("lightspeed"));
+        self._lightspeedParticle.Add(self.MapObject.Transform.GetTransform("lightspeed/wall"));
+        self._thrusters.Add(self.MapObject.Transform.GetTransform("TrailL1"));
+        self._thrusters.Add(self.MapObject.Transform.GetTransform("TrailL2"));
+        self._thrusters.Add(self.MapObject.Transform.GetTransform("TrailR1"));
+        self._thrusters.Add(self.MapObject.Transform.GetTransform("TrailR2"));
+    }
+
+    function OnCollisionStay(other)
+    {
+        if (other.Type == "Human" && other.IsMine && self._driver == null)
+        {
+            UI.SetLabelForTime("MiddleCenter", "Press " + Input.GetKeyName("Interaction/Interact") + " to drive the jet.", 0.1);
+            self._collidingHuman = other;
+        }
+    }
+
+    function OnTick()
+    {
+        self._collidingHuman = null;
+
+        # velocity
+        currentSpeed = self._rigidbody.GetVelocity();
+        localVelocity = self.MapObject.Transform.InverseTransformDirection(currentSpeed);
+        localForward = localVelocity.Z;
+        localVelocity.Z = 0;
+        otherForces = self.MapObject.Transform.TransformDirection(localVelocity);
+        
+        # rotations
+        input = Vector3(self._pitch, self._yaw, self._roll);
+        torqueForce = Vector3(self.PitchSpeed, self.YawSpeed, self.RollSpeed);
+        currentAngularVelocity = self._rigidbody.GetAngularVelocity();
+        angularSpeed = currentAngularVelocity.Magnitude;
+
+        speedFactor = self._rigidbody.GetVelocity().Magnitude / self.MaxSpeed;
+        torque = Vector3.Multiply(input, torqueForce) * speedFactor;
+
+        if (angularSpeed > self.MaxTurn)
+        { 
+            excessAngularVelocity = currentAngularVelocity.Normalized * (angularSpeed - self.MaxTurn);
+            torque -= excessAngularVelocity;
+        }
+
+        finalTorque = (self.MapObject.Right * torque.X) + (self.MapObject.Up * torque.Y) + (self.MapObject.Forward * torque.Z);
+        counterTorque = Vector3.Zero;
+        if (input.X == 0.0)
+        {
+            counterTorque.X = currentAngularVelocity.X;
+        }
+        if (input.Y == 0.0)
+        {
+            counterTorque.Y = currentAngularVelocity.Y;
+        }
+        if (input.Z == 0.0)
+        {
+            counterTorque.Z = currentAngularVelocity.Z;
+        }
+
+        finalTorque -= counterTorque * self.TurnDeccel;
+        self._rigidbody.AddTorque(finalTorque, "VelocityChange");
+
+        # finish velocity calculations after the rotation
+        forwardForce = localForward + (self._accel * self.Speed);
+        newForwardVelocity = self.MapObject.Transform.TransformDirection(Vector3(0, 0, forwardForce));
+        finalVelocity = newForwardVelocity;
+        self._rigidbody.SetVelocity(finalVelocity);
+
+        cast = Physics.LineCast(self.MapObject.Position + Vector3.Down, self.MapObject.Position + Vector3.Down * 4, "MapObjects");
+        if (cast != null)
+        {
+
+        }
+        active = finalVelocity.Magnitude > self.LightSpeedMin;
+        if (active == true)
+        {
+            for (particle in self._lightspeedParticle)
+            {
+                particle.ToggleParticle(true);
+            }
+            self._lsJitter += Math.Sign(self._lsJitter) * finalVelocity.Magnitude / 100;
+        }
+        else
+        {
+            for (particle in self._lightspeedParticle)
+            {
+                particle.ToggleParticle(false);
+            }
+            self._lsJitter = 0.0;
+        }
+    }
+
+    function OnFrame()
+    {   
+        if (Input.GetKeyDown("Interaction/Interact"))
+        {
+            if (self._driver != null)
+            {
+                self._driver.Unmount();
+                self._driver = null;
+                Camera.SetManual(false);
+            }
+            elif (self._collidingHuman != null)
+            {
+                self._driver = self._collidingHuman;
+                self._driver.MountMapObject(self.MapObject, Vector3(0, 0.1, 3.2), Vector3.Zero);
+                self._driver.ClearHooks();
+                Camera.SetManual(true);
+            }
+            return;
+        }
+
+        if (self._driver != null)
+        {
+            if (self._driver.CurrentAnimation != "Armature|horse_idle")
+            {
+                self._driver.PlayAnimation("Armature|horse_idle");
+            }  
+
+            accel = 0.0;
+            roll = 0.0;
+            pitch = 0.0;
+            yaw = 0.0;
+
+            if (Input.GetKeyHold("Human/Jump"))
+            {
+                accel += 1.0;
+            }
+            if (Input.GetKeyHold("Human/Dodge"))
+            {
+                accel -= 1.0;
+            }
+            if (Input.GetKeyHold("General/Forward"))
+            {
+                pitch += 1.0;
+            }
+            if (Input.GetKeyHold("General/Back"))
+            {
+                pitch -= 1.0;
+            }
+            if (Input.GetKeyHold("General/Right"))
+            {
+                yaw += 1.0;
+            }
+            if (Input.GetKeyHold("General/Left"))
+            {
+                yaw -= 1.0;
+            }
+            if (Input.GetKeyHold("Human/HookRight"))
+            {
+                roll -= 1.0;
+            }
+            if (Input.GetKeyHold("Human/HookLeft"))
+            {
+                roll += 1.0;
+            }
+
+            self._accel = accel;
+            self._roll = roll;
+            self._pitch = pitch;
+            self._yaw = yaw;
+
+            
+            pos = Vector3(0,6, 0-25);
+            Camera.SetPosition(self.MapObject.Position + self.MapObject.Transform.TransformDirection(pos));
+            targetRot = self.MapObject.Transform.Rotation;
+            targetRot += Vector3.Up * self._lsJitter;
+            self._lsJitter *= 0-1;
+            Camera.SetRotation(targetRot);
+            
+            Camera.SetVelocity(VectorX.ClampMagnitude(vel, 0, 1300));
+            Camera.SetFOV(40 + Math.Clamp(vel.Magnitude / 10, 0, 130));
+            #Game.Print(Camera.FOV);
+        }
+    }
+}
+
+component TargetIcon
+{
+    _target = null;
+    Distance = 1.0;
+    Scale = 1.0;
+    _child1 = null;
+    _child2 = null;
+    _oldCameraPos = Vector3.Zero;
+
+    function Init() 
+    {
+        self.MapObject.Scale = Vector3(self.Scale, self.Scale, self.Scale);
+        self._target = Map.FindMapObjectByName("target");
+        self._child1 = self.MapObject.Transform.GetTransform("target 1");
+        self._child2 = self.MapObject.Transform.GetTransform("target 2");
+    }
+
+    function OnLateFrame() 
+    {
+        scale = (self._target.Position - Camera.Position).Magnitude / 10;
+        self._child1.Scale = Vector3(1, 1, 1) * Math.Clamp(scale, 1, 50) * self.Scale;
+        self._child2.LocalRotation = Vector3(0, 0, Time.GameTime * 100);
+
+        currentPos = Camera.Position;
+        diff = currentPos - self._oldCameraPos;
+
+        CameraPos = Camera.Position + Camera.Velocity / 50;
+        fromTo = (self._target.Position - CameraPos).Normalized;
+        self.MapObject.Position = CameraPos + fromTo * self.Distance;
+        self.MapObject.Forward = Camera.Forward;
+        self._oldCameraPos = Camera.Position;
+    }
+}
+
+extension VectorX
+{
+    function ClampMagnitude(vector, min, max) 
+    {
+        magnitude = vector.Magnitude;
+        if (magnitude < min)
+        {
+            return vector.Normalized * min;
+        }
+        if (magnitude > max)
+        {
+            return vector.Normalized * max;
+        }
+
+        return vector;
+    }
+}

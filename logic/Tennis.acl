@@ -1,0 +1,409 @@
+class Main
+{
+    _racket = null;
+    
+    function Init()
+    {
+        self._racket = Map.FindMapObjectByName("rac_origin");
+    }
+
+    function OnCharacterSpawn(character)
+    {    
+        if (character.IsMainCharacter && character.Type == "Human")
+        {
+            character.CurrentGas = 0;
+            character.CurrentBlade = 0;
+            character.CurrentAmmoLeft = 0;
+            character.CurrentAmmoRound = 0;
+            newRacket = Map.CopyMapObject(self._racket, true);
+            comp = newRacket.GetComponent("TennisRacket");
+
+            scale = 0.1;
+            newRacket.Scale = Vector3(scale,scale,scale);
+            comp.SetCharacter(character);
+        }
+    }
+
+    function OnTick()
+    {
+        character = Network.MyPlayer.Character;
+        
+    }
+}
+
+component TennisBall
+{
+    _rigidbody = null;
+
+    function Init()
+    {
+        self._rigidbody = self.MapObject.GetComponent("Rigidbody");
+    }
+    
+    function OnFrame()
+    {
+        if (Input.GetKeyDown("Interaction/Interact2"))
+        {
+            character = Network.MyPlayer.Character;
+            self.Reset(character);
+        }
+        if (Input.GetKeyDown("Interaction/Interact3"))
+        {
+            character = Network.MyPlayer.Character;
+            self.Hit(((character.Position + character.Forward + Vector3.Up) - self.MapObject.Position).Normalized);
+        }
+    }
+    
+    coroutine Reset(character)
+    {
+        s = 1.0;
+        while (s > 0)
+        {
+            self.MapObject.Position = character.Position + character.Forward + Vector3.Up * 3;
+            s -= Time.FrameTime;
+            wait 0.0;
+        }
+        self.Hit(Vector3.Up * 2);
+    }
+
+    function Hit(vector)
+    {
+        upSpeed = 10;
+        direction = vector + Vector3.Up * upSpeed;
+        self._rigidbody.SetVelocity(direction);
+    }
+}
+
+component TennisRacket
+{
+    _character = null;
+    _racket_collider = null;
+    _animator = null;
+    function SetCharacter(character)
+    {
+        self._character = character;
+        col = Map.FindMapObjectByName("rac_collision");
+        self._racket_collider = Map.CopyMapObject(col, true);
+        self._racket_collider.GetComponent("OnCollision").SetHandler(self);
+    
+        self._animator = self.MapObject.GetComponent("PosAnimator");
+
+        clip1 = List();
+        clip1.Add(Keyframe(1.0, Vector3(0,2,2), Quaternion.FromEuler(Vector3(0,0,0))));
+        clip1.Add(Keyframe(1.0, Vector3(1.408,2,1.408), Quaternion.FromEuler(Vector3(45,0,0))));
+        clip1.Add(Keyframe(1.0, Vector3(2,2,0), Quaternion.FromEuler(Vector3(90,0,0))));
+        clip1.Add(Keyframe(1.0, Vector3(1.408,2,-1.408), Quaternion.FromEuler(Vector3(135,0,0))));
+        clip1.Add(Keyframe(1.0, Vector3(0,2,-2), Quaternion.FromEuler(Vector3(180,0,0))));
+        clip1.Add(Keyframe(1.0, Vector3(-1.408,2,-1.408), Quaternion.FromEuler(Vector3(234,0,0))));
+        clip1.Add(Keyframe(1.0, Vector3(-2,2,0), Quaternion.FromEuler(Vector3(270,0,0))));
+        clip1.Add(Keyframe(1.0, Vector3(-1.408,2,1.408), Quaternion.FromEuler(Vector3(315,0,0))));
+
+        c_idle = List();
+        c_idle.Add(Keyframe(4, Vector3(0-0.5,0.5,0), Quaternion.FromEuler(Vector3(0-100,0,5))));
+        c_idle.Add(Keyframe(4, Vector3(0-0.5,0.4,0), Quaternion.FromEuler(Vector3(0-100,0,0))));
+        
+        c_hold = List();
+        c_hold.Add(Keyframe(2, Vector3(0-0.5,1.0,0), QuaternionX.LookRotation(Vector3.Forward, Vector3.Up)));
+        c_hold.Add(Keyframe(2, Vector3(0-0.5,1.2,0), QuaternionX.LookRotation(Vector3.Forward, Vector3(0.2, 0.8, 0))));
+        c_hold.Add(Keyframe(2, Vector3(0-0.5,1.2,0), QuaternionX.LookRotation(Vector3.Forward, Vector3(0.2, 0.8, 0))));
+        
+        c_swing = List();
+        
+        
+        self._animator.AddClip(AnimationClip("test", true, clip1));
+        self._animator.AddClip(AnimationClip("idle", true, c_idle));
+        self._animator.AddClip(AnimationClip("hold", false, c_hold));
+        
+        self._animator.Play("idle");
+        self._animator._speed = 2.0;
+    }
+
+    function OnFrame()
+    {
+        if (self._character != null)
+        {
+            
+            if (Input.GetKeyDown("Human/AttackDefault"))
+            {
+                self._animator.Play("hold");
+            }
+            if (Input.GetKeyUp("Human/AttackDefault"))
+            {
+                self._animator.Play("test");
+            }
+
+            offset = Vector3.Zero;
+            rotation = Quaternion.Identity;
+            if (self._animator._target != null)
+            {
+                offset = self._animator._target.Position;
+                rotation = self._animator._target.Rotation;
+            }
+            self.MapObject.Position = self._character.Position + offset;
+            self.MapObject.Rotation = (rotation).Euler;
+            self._racket_collider.Position = self._character.Position + self._character.Forward + Vector3.Up * 2;
+            self._racket_collider.Rotation = self._character.Rotation;
+            
+        }
+    }
+    
+    function OnCollision(type, other)
+    {
+        if (type == "enter")
+        {
+            Game.Print("enter");
+        }
+        elif (type == "exit")
+        {
+            Game.Print("exit.");
+        }
+        elif (type == "stay")
+        {
+            Game.Print(other.Name);
+            if (other.Name == "TennisBall" && Input.GetKeyUp("Human/AttackDefault"))
+            {
+                other.GetComponent("TennisBall").Hit(Camera.Forward * 35);
+            }
+        }
+    }
+}
+
+component OnCollision
+{
+    _Handler = null;
+
+    function SetHandler(handler)
+    {
+        self._Handler = handler;
+    }
+
+    function OnCollisionEnter(other)
+    {
+        if (self._Handler != null)
+        {
+            self._Handler.OnCollision("enter", other);
+        }   
+    }
+
+    function OnCollisionStay(other)
+    {
+        if (self._Handler != null)
+        {
+            self._Handler.OnCollision("stay", other);
+        }
+    }
+
+    function OnCollisionExit(other)
+    {
+        if (self._Handler != null)
+        {
+            self._Handler.OnCollision("exit", other);
+        }
+    }
+}
+
+component PosAnimator
+{
+    _clips = List();
+    _currentClip = null;
+    _isPlaying = false;
+    _currentTime = 0.0;
+    _target = null;
+    _speed = 1.0;
+
+    function AddClip(clip)
+    {
+        self._clips.Add(clip);
+    }
+
+    function Play(aniName)
+    {
+        clip = null;
+        for (_c in self._clips)
+        {
+            if (_c.Name == aniName)
+            {
+                clip = _c;
+            }
+        }
+        if (clip == null)
+        {
+            Game.Print("no animation with name '" + aniName + "' found");
+            return;
+        }
+        
+        self._currentClip = clip;
+        self._currentTime = 0.0;
+        self._isPlaying = true;
+    }
+
+    function Stop()
+    {
+        self._currentClip = null;
+        self._currentTime = 0.0;
+        self._isPlaying = false;
+    }
+
+    function OnFrame()
+    {
+        clip = self._currentClip;
+        if (clip != null)
+        {
+            if (self._currentTime > clip._duration)
+            {
+                if (clip._loop == true)
+                {
+                    self._currentTime -= clip._duration;
+                }
+                else
+                {
+                    self.Stop();
+                    return;
+                }
+            }
+            
+            self._target = clip.Evaluate(self._currentTime);
+            self._currentTime += Time.FrameTime * self._speed;
+        }
+    }
+}
+
+class AnimationClip
+{
+    Name = "";
+    _duration = 1.0;
+    _keyframes = List();
+    _loop = false;
+    
+    function Init(name, loop, keys)
+    {
+        self.Name = name;
+        self._loop = loop;
+        self.AddKeys(keys);
+    }
+
+    function AddKeys(keys)
+    {
+        self._keyframes = keys;
+        duration = 0.0;
+        for (keyframe in keys)
+        {
+            duration += keyframe.Time;
+        }
+        self._duration = duration;
+    }
+
+    function Evaluate(time)
+    {
+        nextTime = 0.0;
+        oldPos = Vector3.Zero;
+        oldRot = Quaternion.Identity;
+
+        for (i in Range(0, self._keyframes.Count+1, 1))
+        {
+            currentTime = 0;
+            currentPos = Vector3.Zero;
+            currentRot = Quaternion.Identity;
+
+            if (i == self._keyframes.Count)
+            {
+                currentTime = self._keyframes.Get(0).Time;
+                currentPos = self._keyframes.Get(0).Position;
+                currentRot = self._keyframes.Get(0).Rotation;
+            }
+            else
+            {
+                currentTime = self._keyframes.Get(i).Time;
+                currentPos = self._keyframes.Get(i).Position;
+                currentRot = self._keyframes.Get(i).Rotation;
+            }
+            
+            if (time < nextTime)
+            {
+                fromTo = (nextTime - time) / currentTime;
+                return Keyframe(fromTo, Vector3.Lerp(oldPos, currentPos, 1-fromTo), Quaternion.Lerp(oldRot, currentRot, 1-fromTo));
+            }
+
+            nextTime += currentTime;
+            oldPos = currentPos;
+            oldRot = currentRot;
+        }
+        return Keyframe(fromTo, oldPos, oldRot);
+    }
+}
+
+class Keyframe
+{
+    Time = 0.0;
+    Position = Vector3.Zero;
+    Rotation = Quaternion.Identity;
+
+    function Init(time, position, rotation)
+    {
+        self.Time = time;
+        self.Position = position;
+        self.Rotation = rotation;
+    }
+}
+
+extension QuaternionX
+{
+    function LookRotation(forward, up)
+    {
+        forward = forward.Normalized;
+
+        vector = forward;
+        vector2 = Vector3.Cross(up, vector).Normalized;
+        vector3 = Vector3.Cross(vector, vector2);
+        m00 = vector2.X;
+        m01 = vector2.Y;
+        m02 = vector2.Z;
+        m10 = vector3.X;
+        m11 = vector3.Y;
+        m12 = vector3.Z;
+        m20 = vector.X;
+        m21 = vector.Y;
+        m22 = vector.Z;
+
+
+        num8 = (m00 + m11) + m22;
+        quaternion = Quaternion.Identity;
+        if (num8 > 0)
+        {
+            num = Math.Sqrt(num8 + 1);
+            quaternion.W = num * 0.5;
+            num = 0.5 / num;
+            quaternion.X = (m12 - m21) * num;
+            quaternion.Y = (m20 - m02) * num;
+            quaternion.Z = (m01 - m10) * num;
+            return quaternion;
+        }
+        if ((m00 >= m11) && (m00 >= m22))
+        {
+            num7 = Math.Sqrt(((1 + m00) - m11) - m22);
+            num4 = 0.5 / num7;
+            quaternion.X = 0.5 * num7;
+            quaternion.Y = (m01 + m10) * num4;
+            quaternion.Z = (m02 + m20) * num4;
+            quaternion.W = (m12 - m21) * num4;
+            return quaternion;
+        }
+        if (m11 > m22)
+        {
+            num6 = Math.Sqrt(((1 + m11) - m00) - m22);
+            num3 = 0.5 / num6;
+            quaternion.X = (m10+ m01) * num3;
+            quaternion.Y = 0.5 * num6;
+            quaternion.Z = (m21 + m12) * num3;
+            quaternion.W = (m20 - m02) * num3;
+            return quaternion; 
+        }
+        num5 = Math.Sqrt(((1 + m22) - m00) - m11);
+        num2 = 0.5 / num5;
+        quaternion.X = (m20 + m02) * num2;
+        quaternion.Y = (m21 + m12) * num2;
+        quaternion.Z = 0.5 * num5;
+        quaternion.W = (m01 - m10) * num2;
+        return quaternion;
+    }
+}
