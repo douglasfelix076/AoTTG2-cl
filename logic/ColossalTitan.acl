@@ -75,10 +75,10 @@ component NapeCollider
 component ColossalTitan
 {
     Name = "Colossal Titan";
-    healthTime = 0.0;
-    maxHealth = 0;
-    NapeArmor = 10000;
-    NapeArmorTotal = 10000;
+    MaxHealth = 0;
+    _healthTime = 0.0;
+    _CurrrentHealth = 10000;
+    _CurrrentHealthTotal = 10000;
     
     _transform = null;
     _animation = null;
@@ -107,6 +107,7 @@ component ColossalTitan
     _sweepSmokeObject = null;
     _neck = null;
     _napeCollider = null;
+    _dummyTitan = null;
     _door_broken = null;
     _door_closed = null;
     _hasDie = false;
@@ -124,42 +125,42 @@ component ColossalTitan
         self._sweepSmokeObject = self._transform.GetTransform("Amarture/Core/Controller_Body/hip/spine/chest/shoulder_R/upper_arm_R/forearm_R/sweep_smoke");
         self._napeCollider = Map.CreateMapObjectRaw("Scene,Geometry/Sphere1,645,0,1,1,1,0,NapeCollider,0,0,0,0,0,0,3.2,3.2,3.2,Region,Hitboxes,Default,DefaultNoTint|255/255/255/255,NapeCollider|");
         self._napeCollider.GetComponent("NapeCollider").Set(self);
-        self.NapeArmor = 1000;
+        self._CurrrentHealth = 1000;
         flag = Game.GetMiscSetting("EndlessRespawnEnabled");
         if (self._difficulty == 1)
         {
             if (!flag)
             {
-                self.NapeArmor = 5000;
+                self._CurrrentHealth = 5000;
             }
             else
             {
-                self.NapeArmor = 2000;
+                self._CurrrentHealth = 2000;
             }
         }
         elif (self._difficulty == 2)
         {
             if (!flag)
             {
-                self.NapeArmor = 8000;
+                self._CurrrentHealth = 8000;
             }
             else
             {
-                self.NapeArmor = 3500;
+                self._CurrrentHealth = 3500;
             }
         }
         elif (self._difficulty == 3)
         {
             if (!flag)
             {
-                self.NapeArmor = 12000;
+                self._CurrrentHealth = 12000;
             }
             else
             {
-                self.NapeArmor = 5000;
+                self._CurrrentHealth = 5000;
             }
         }
-        self.NapeArmorTotal = self.NapeArmor;
+        self._CurrrentHealthTotal = self._CurrrentHealth;
         self._state = "wait";
         self.GetNearestHero();
         self._transform.Position = Vector3.Down * 10000.0;
@@ -168,12 +169,7 @@ component ColossalTitan
         self._door_broken.Active = false;
         self._door_closed.Active = true;
         self._scale = 20.0;
-        /*
-        if (Minimap.instance != null)
-        {
-            Minimap.instance.TrackGameObjectOnMinimap(self.gameObject, Color.black, false, true, Minimap.IconStyle.CIRCLE);
-        }
-        */
+
         if (Network.IsMasterClient)
         {
             if (Game.GetTitanSetting("TitanSpawnEnabled"))
@@ -183,27 +179,32 @@ component ColossalTitan
                 self._scale = Random.RandomFloat(min, max);
             }
             self._lagMax = 150.0 + self._scale * 3.0;
-            self.healthTime = 0.0;
-            self.maxHealth = self.NapeArmor;
+            self._healthTime = 0.0;
+            self.MaxHealth = self._CurrrentHealth;
             if (Game.GetTitanSetting("TitanHealthMode") > 0)
             {
                 min = Game.GetTitanSetting("TitanHealthMin");
                 max = Game.GetTitanSetting("TitanHealthMax");
                 health = Random.RandomFloat(min, max);
-                self.maxHealth = health;
-                self.NapeArmor = health;
+                self.MaxHealth = health;
+                self._CurrrentHealth = health;
             }
-            if (self.NapeArmor > 0)
+            if (self._CurrrentHealth > 0)
             {
-                #self.NetworkView.SendMessage("LabelRPC", PhotonTargets.AllBuffered, new object[] { self.NapeArmor, self.maxHealth });
+                #self.NetworkView.SendMessage("LabelRPC", PhotonTargets.AllBuffered, new object[] { self._CurrrentHealth, self.MaxHealth });
             }
+        
+            self._dummyTitan = Game.SpawnTitanAt("Dummy", self.MapObject.Position + Vector3.Down * 100);
+            self._dummyTitan.Health = self._CurrrentHealth;
+            self._dummyTitan.MaxHealth = self.MaxHealth;
         }
+
         self._hasspawn = true;
     }
 
     function OnTick()
     {
-        self.healthTime -= Time.TickTime;
+        self._healthTime -= Time.TickTime;
         self.updateLabel();
         if (self._state != "null")
         {
@@ -463,8 +464,8 @@ component ColossalTitan
         elif (call == "LabelRPC")
         {
             health = Convert.ToInt(args.Get(0));
-            maxHealth = Convert.ToInt(args.Get(1));
-            self.LabelRPC(health, maxHealth);
+            MaxHealth = Convert.ToInt(args.Get(1));
+            self.LabelRPC(health, MaxHealth);
         }
         elif (call == "PlayAnimationRPC")
         {
@@ -489,7 +490,7 @@ component ColossalTitan
         {
             viewID = Convert.ToInt(args.Get(0));
             speed = Convert.ToInt(args.Get(1));
-            self.Damage(viewID, speed);
+            self.GetDamaged(viewID, speed);
         }
     }
 
@@ -629,7 +630,7 @@ component ColossalTitan
         {
             self.CallTitan(false);
         }
-        if (self.NapeArmor < self.NapeArmorTotal * 0.3)
+        if (self._CurrrentHealth < self._CurrrentHealthTotal * 0.3)
         {
             if (Math.Mod(self._attackCount, Convert.ToInt(num2 * 0.5)) == 0)
             {
@@ -707,7 +708,7 @@ component ColossalTitan
         }
     }
 
-    function LabelRPC(health, maxHealth)
+    function LabelRPC(health, MaxHealth)
     {
         if (health < 0)
         {
@@ -719,8 +720,8 @@ component ColossalTitan
         else
         {
             str = "7FFF00";
-            
-            num2 = Convert.ToFloat(health) / Convert.ToFloat(maxHealth);
+
+            num2 = Convert.ToFloat(health) / Convert.ToFloat(MaxHealth);
 
             if (num2 < 0.75 && num2 >= 0.5)
             {
@@ -762,7 +763,7 @@ component ColossalTitan
                 self._healthLabel.transform.Scale = new Vector3(a, a, a);
             }
             string str = "[7FFF00]";
-            float num2 = Convert.ToFloat(health)) / Convert.ToFloat(maxHealth);
+            float num2 = Convert.ToFloat(health)) / Convert.ToFloat(MaxHealth);
             if ((num2 < 0.75f) && (num2 >= 0.5))
             {
                 str = "[f2b50f]";
@@ -847,26 +848,27 @@ component ColossalTitan
         self.PlayAnimation(self._actionName, 0.1);
         self._attackChkOnce = false;
     }
-    function Damage(viewID, speed)
+
+    function GetDamaged(viewID, speed)
     {
         human = Game.FindCharacterByViewID(viewID);
         if (human != null)
         {
             vector = human.Position - self._neck.Position;
-            if (vector.Magnitude < self._lagMax && self.healthTime <= 0.0)
+            if (vector.Magnitude < self._lagMax && self._healthTime <= 0.0)
             {
                 if (!Game.GetTitanSetting("TitanArmorEnabled") || speed >= Game.GetTitanSetting("TitanArmor"))
                 {
-                    self.NapeArmor -= speed;
+                    self._CurrrentHealth -= speed;
                 }
-                if (self.maxHealth > 0.0)
+                if (self.MaxHealth > 0.0)
                 {
-                    #self.NetworkView.SendMessage("LabelRPC", PhotonTargets.AllBuffered, new object[] { self.NapeArmor, self.maxHealth });
+                    #self.NetworkView.SendMessage("LabelRPC", PhotonTargets.AllBuffered, new object[] { self._CurrrentHealth, self.MaxHealth });
                 }
                 self.NeckSteam();
-                if (self.NapeArmor <= 0)
+                if (self._CurrrentHealth <= 0)
                 {
-                    self.NapeArmor = 0;
+                    self._CurrrentHealth = 0;
                     if (!self._hasDie)
                     {
                         self.NetworkView.SendMessageAll("DieRPC");
@@ -881,7 +883,7 @@ component ColossalTitan
                     GameObject.Find("MultiplayerManager").GetComponent<FengGameManagerMKII>().photonView.RPC("netShowDamage", human.Player, speed);
                     */
                 }
-                self.healthTime = 0.2;
+                self._healthTime = 0.2;
             }
         }
     }
@@ -890,7 +892,7 @@ component ColossalTitan
     {
         if (character.Type == "Human")
         {
-            self.Damage(character.ViewID, damage);
+            self.GetDamaged(character.ViewID, damage);
         }
     }
 
