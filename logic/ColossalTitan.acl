@@ -709,6 +709,34 @@ component ColossalTitan
 
     function LabelRPC(health, maxHealth)
     {
+        if (health < 0)
+        {
+            if (self._healthLabel != null)
+            {
+                UI.SetLabel("TopCenter", "");
+            }
+        }
+        else
+        {
+            str = "7FFF00";
+            
+            num2 = Convert.ToFloat(health) / Convert.ToFloat(maxHealth);
+
+            if (num2 < 0.75 && num2 >= 0.5)
+            {
+                str = "f2b50f";
+            }
+            elif (num2 < 0.5 && num2 >= 0.25)
+            {
+                str = "ff8100";
+            }
+            elif (num2 < 0.25)
+            {
+                str = "ff3333";
+            }
+            UI.SetLabel("TopCenter", "Colossal Titan Health: <color=#" + str + ">" + health + "</color>");
+        }
+        
         /*
         if (health < 0)
         {
