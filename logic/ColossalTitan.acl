@@ -4,13 +4,12 @@ class Main
     {
         Map.UpdateNavMeshAsync();
 
-        region = Map.FindMapObjectByName("AbnormalWarning");
+        region = Map.FindMapObjectByName("TitanWarning");
         if (region != null)
         {
             region.GetComponent("CollisionRegion").SetHandler(self);
         }
-
-        region2 = Map.FindMapObjectByName("AbnormalWarning");
+        region2 = Map.FindMapObjectByName("TitanWarning2");
         if (region2 != null)
         {
             region2.GetComponent("CollisionRegion").SetHandler(self);
@@ -41,22 +40,20 @@ class Main
 
     function OnCollision(name, type, other)
     {
-        if (Network.IsMasterClient)
+        if (type == "enter" && other.Type == "Titan")
         {
-            if (type == "enter" && object.Type == "Titan")
+            if (name == "TitanWarning2")
             {
-                if (name == "AbnormalWarning2")
-                {
-                    other.AddOutline(Color(255,255,255), "OutlineAll");
-                }
-                else
-                {
-                    other.AddOutline(Color(255,255,255), "OutlineHidden");
-                }
-
-                message = "<color=#A8FF24><b>WARNING!</b> An abnormal titan is approaching the north gate!</color>";
-                Game.PrintAll(message);
+                other.RemoveOutline();
+                other.AddOutline(Color(255,255,255), "OutlineAll");
             }
+            else
+            {
+                other.AddOutline(Color(255,255,255), "OutlineHidden");
+            }
+
+            message = "<color=#A8FF24><b>WARNING!</b> An abnormal titan is approaching the north gate!</color>";
+            Game.Print(message);
         }
     }
 }
@@ -897,7 +894,7 @@ component ColossalTitan
 
 component RockScript
 {
-    _desPt =  Vector3(0-200.0, 0.0, 0-280.0);
+    _desPt =  Vector3(0-200.0, 10.0, 0-280.0);
     _disable = false;
     _g = 500.0;
     _speed = 800.0;
@@ -906,7 +903,7 @@ component RockScript
 
     function Init()
     {
-        self.MapObject.Position = Vector3(0.0, 0.0, 676.0);
+        self.MapObject.Position = Vector3(0.0, 10.0, 676.0);
         self._vh = self._desPt - self.MapObject.Position;
         self._vv = Vector3(0.0, self._g * self._vh.Magnitude / (2.0 * self._speed), 0.0);
         self._vh = self._vh.Normalized * self._speed;
@@ -988,22 +985,34 @@ component CollisionRegion
     
     function OnCollisionEnter(other)
     {
-        self._handler.OnCollision(self.Name, "enter", other);
+        if (self._handler != null)
+        {
+            self._handler.OnCollision(self.Name, "enter", other);
+        }
     }
 
     function OnCollisionStay(other)
     {
-        self._handler.OnCollision(self.Name, "stay", other);
+        if (self._handler != null)
+        {
+            self._handler.OnCollision(self.Name, "stay", other);
+        }
     }
 
     function OnCollisionExit(other)
     {
-        self._handler.OnCollision(self.Name, "exit", other);
+        if (self._handler != null)
+        {
+            self._handler.OnCollision(self.Name, "exit", other);
+        }
     }
 
     function OnGetHit(character, name, damage, type)
     {
-        self._handler.OnHit(self.Name, character, name, damage, type);
+        if (self._handler != null)
+        {
+            self._handler.OnHit(self.Name, character, name, damage, type);
+        }
     }
 }
 
