@@ -7,10 +7,10 @@ component ColossalTitan
     myDistance = 0.0;
     NapeArmor = 10000;
     NapeArmorTotal = 10000;
-    Scale = 8.0;
-
+    
     _transform = null;
     _animation = null;
+    _scale = 8.0;
     _difficulty = 2;
     _waitTime = 2;
     _state = "idle";
@@ -23,6 +23,8 @@ component ColossalTitan
     _attackChkOnce = false;
     _attackCount = 0;
     _attackPattern = 0-1;
+    _animationLength = 0.0;
+    _animationStart = 0.0;
     _checkHitCapsuleEnd = null;
     _checkHitCapsuleEndOld = Vector3(0,0,0);
     _checkHitCapsuleR = 0.0;
@@ -32,6 +34,7 @@ component ColossalTitan
     _neck = null;
     _door_broken = null;
     _door_closed = null;
+    _civillians = null;
     _hasDie = false;
     _hasspawn = false;
     _healthLabel = null;
@@ -45,8 +48,53 @@ component ColossalTitan
         self._neck = self._transform.GetTransform("Amarture/Core/Controller_Body/hip/spine/chest/neck");
         self._neckSteamObject = self._transform.GetTransform("...");
         self._sweepSmokeObject = self._transform.GetTransform("...");
-        self.startMain();
-        self.Scale = 20.0;
+        if (self._myHero == null)
+        {
+            self.findNearestHero();
+        }
+        self.NapeArmor = 1000;
+        flag = Game.GetMiscSetting("EndlessRespawnEnabled");
+        if (self._difficulty == 1)
+        {
+            if (flag == false)
+            {
+                self.NapeArmor = 5000;
+            }
+            else
+            {
+                self.NapeArmor = 2000;
+            }
+        }
+        elif (self._difficulty == 2)
+        {
+            if (flag == false)
+            {
+                self.NapeArmor = 8000;
+            }
+            else
+            {
+                self.NapeArmor = 3500;
+            }
+        }
+        elif (self._difficulty == 3)
+        {
+            if (flag == false)
+            {
+                self.NapeArmor = 12000;
+            }
+            else
+            {
+                self.NapeArmor = 5000;
+            }
+        }
+        self._state = "wait";
+        self.NapeArmorTotal = self.NapeArmor;
+        self._transform.Position = Vector3.Down * 10000.0;
+        self._door_broken = GameObject.Find("_door_broke");
+        self._door_closed = GameObject.Find("_door_fine");
+        self._door_broken.Active = false;
+        self._door_closed.Active = true;
+        self._scale = 20.0;
         /*
         if (Minimap.instance != null)
         {
@@ -59,9 +107,9 @@ component ColossalTitan
             {
                 min = Game.GetTitanSetting("TitanSizeMin");
                 max = Game.GetTitanSetting("TitanSizeMax");
-                self.Scale = Random.RandomFloat(min, max);
+                self._scale = Random.RandomFloat(min, max);
             }
-            self.lagMax = 150.0 + (self.Scale * 3.0);
+            self.lagMax = 150.0 + self._scale * 3.0;
             self.healthTime = 0.0;
             self.maxHealth = self.NapeArmor;
             if (Game.GetTitanSetting("TitanHealthMode") > 0)
@@ -80,90 +128,6 @@ component ColossalTitan
         self._hasspawn = true;
     }
 
-    function startMain()
-    {
-        if (self._myHero == null)
-        {
-            self.findNearestHero();
-        }
-        self.NapeArmor = 1000;
-        flag = Game.GetMiscSetting("EndlessRespawnEnabled");
-        if (self._difficulty == 0)
-        {
-            if (flag == false)
-            {
-                self.NapeArmor = 5000;
-            }
-            else
-            {
-                self.NapeArmor = 2000;
-            }
-        }
-        elif (self._difficulty == 1)
-        {
-            if (flag == false)
-            {
-                self.NapeArmor = 8000;
-            }
-            else
-            {
-                self.NapeArmor = 3500;
-            }
-            /*
-            IEnumerator enumerator = self._animation.GetEnumerator();
-            try
-            {
-                while (enumerator.MoveNext())
-                {
-                    AnimationState current = (AnimationState) enumerator.Current;
-                    current.speed = 1.02f;
-                }
-            }
-            finally
-            {
-                IDisposable disposable = enumerator as IDisposable;
-                if (disposable != null)
-                	disposable.Dispose();
-            }
-            */
-        }
-        elif (self._difficulty == 2)
-        {
-            if (flag == false)
-            {
-                self.NapeArmor = 12000;
-            }
-            else
-            {
-                self.NapeArmor = 5000;
-            }
-            /*
-            IEnumerator enumerator2 = self._animation.GetEnumerator();
-            try
-            {
-                while (enumerator2.MoveNext())
-                {
-                    AnimationState state2 = (AnimationState) enumerator2.Current;
-                    state2.speed = 1.05;
-                }
-            }
-            finally
-            {
-                IDisposable disposable2 = enumerator2 as IDisposable;
-                if (disposable2 != null)
-                	disposable2.Dispose();
-            }
-            */
-        }
-        self._state = "wait";
-        self.NapeArmorTotal = self.NapeArmor;
-        self._transform.Position = Vector3.Down * 10000.0;
-        self._door_broken = GameObject.Find("_door_broke");
-        self._door_closed = GameObject.Find("_door_fine");
-        self._door_broken.Active = false;
-        self._door_closed.Active = true;
-    }
-
     function OnTick()
     {
         self.healthTime -= Time.TickTime;
@@ -176,7 +140,7 @@ component ColossalTitan
                 if (self._waitTime <= 0.0)
                 {
                     self._transform.Position = new Vector3(30.0, 0.0, 784.0);
-                    #UnityEngine.Object.Instantiate(Resources.Load("FX/ThunderCT"), self._transform.Position + ((Vector3) (Vector3.Up * 350.0)), Quaternion.Euler(270f, 0.0, 0.0));
+                    Game.SpawnEffect("ShifterThunder", self._transform.Position + Vector3.Up * 350.0, Vector3(270.0, 0.0, 0.0), self._scale);
                     #Camera.main.GetComponent<IN_GAME_MAIN_CAMERA>().flashBlind();
                     if (Network.IsMasterClient == true)
                     {
@@ -192,7 +156,7 @@ component ColossalTitan
             {
                 if (self._state == "attack_sweep")
                 {
-                    if ((self._attackCheckTimeA != 0.0) && (((self._animation["attack_" + self._attackAnimation].normalizedTime >= self._attackCheckTimeA) && (self._animation["attack_" + self._attackAnimation].normalizedTime <= self._attackCheckTimeB)) || (!self._attackChkOnce && (self._animation["attack_" + self._attackAnimation].normalizedTime >= self._attackCheckTimeA))))
+                    if (self._attackCheckTimeA != 0.0 && ((self.GetAnimationNormalizedTime() >= self._attackCheckTimeA && self.GetAnimationNormalizedTime() <= self._attackCheckTimeB) || (!self._attackChkOnce && self.GetAnimationNormalizedTime() >= self._attackCheckTimeA)))
                     {
                         self._attackChkOnce = true;
                         /*
@@ -219,13 +183,10 @@ component ColossalTitan
                         */
                         self._checkHitCapsuleEndOld = self._checkHitCapsuleEnd.Position;
                     }
-                    if (self._animation["attack_" + self._attackAnimation].normalizedTime >= 1.0)
+                    if (self.GetAnimationNormalizedTime() >= 1.0)
                     {
                         self._sweepSmokeObject.ToggleParticle(false);
-                        if (!((IN_GAME_MAIN_CAMERA.gametype != GAMETYPE.MULTIPLAYER) || false))
-                        {
-                            self.NetworkView.SendMessageOthers("stopSweepSmokeRPC", PhotonTargets.Others);
-                        }
+                        self.NetworkView.SendMessageOthers("stopSweepSmokeRPC", PhotonTargets.Others);
                         self.findNearestHero();
                         self.idle();
                         self.playAnimation("idle");
@@ -233,19 +194,18 @@ component ColossalTitan
                 }
                 elif (self._state == "kick")
                 {
-                    if (!self._attackChkOnce && (self._animation[self._actionName].normalizedTime >= self._attackCheckTime))
+                    if (!self._attackChkOnce && (self.GetAnimationNormalizedTime() >= self._attackCheckTime))
                     {
                         self._attackChkOnce = true;
                         self._door_broken.Active = true;
                         self._door_closed.Active = false;
-                        if (!((IN_GAME_MAIN_CAMERA.gametype != GAMETYPE.MULTIPLAYER) || false))
-                        {
-                            #self.NetworkView.SendMessageOthers("changeDoorRPC", PhotonTargets.OthersBuffered);
-                        }
-                        PhotonNetwork.Instantiate("FX/boom1_CT_KICK", (Vector3) ((self._transform.Position + (self._transform.Forward * 120f)) + (self._transform.right * 30.0)), Quaternion.Euler(270f, 0.0, 0.0), 0);
+                        /*
+                        self.NetworkView.SendMessageOthers("changeDoorRPC", PhotonTargets.OthersBuffered);
+                        PhotonNetwork.Instantiate("FX/boom1_CT_KICK", (Vector3) ((self._transform.Position + (self._transform.Forward * 120f)) + (self._transform.right * 30.0)), Quaternion.Euler(270.0, 0.0, 0.0), 0);
                         PhotonNetwork.Instantiate("rock", (Vector3) ((self._transform.Position + (self._transform.Forward * 120f)) + (self._transform.right * 30.0)), Quaternion.Euler(0f, 0.0, 0.0), 0);
+                        */
                     }
-                    if (self._animation[self._actionName].normalizedTime >= 1.0)
+                    if (self.GetAnimationNormalizedTime() >= 1.0)
                     {
                         self.findNearestHero();
                         self.idle();
@@ -254,18 +214,20 @@ component ColossalTitan
                 }
                 elif (self._state == "slap")
                 {
-                    if (!self._attackChkOnce && (self._animation["attack_slap_" + self._attackAnimation].normalizedTime >= self._attackCheckTime))
+                    if (!self._attackChkOnce && (self.GetAnimationNormalizedTime() >= self._attackCheckTime))
                     {
                         GameObject obj4;
                         self._attackChkOnce = true;
-                        obj4 = PhotonNetwork.Instantiate("FX/boom1", self._checkHitCapsuleStart.Position, Quaternion.Euler(270f, 0.0, 0.0), 0);
+                        /*
+                        obj4 = PhotonNetwork.Instantiate("FX/boom1", self._checkHitCapsuleStart.Position, Quaternion.Euler(270.0, 0.0, 0.0), 0);
                         if (obj4.GetComponent<EnemyfxIDcontainer>() != null)
                         {
                             obj4.GetComponent<EnemyfxIDcontainer>().titanName = self.Name;
                         }
                         obj4.transform.Scale = new Vector3(5f, 5f, 5f);
+                        */
                     }
-                    if (self._animation["attack_slap_" + self._attackAnimation].normalizedTime >= 1.0)
+                    if (self.GetAnimationNormalizedTime() >= 1.0)
                     {
                         self.findNearestHero();
                         self.idle();
@@ -274,37 +236,34 @@ component ColossalTitan
                 }
                 elif (self._state == "steam")
                 {
-                    if (!self._attackChkOnce && (self._animation[self._actionName].normalizedTime >= self._attackCheckTime))
+                    if (!self._attackChkOnce && (self.GetAnimationNormalizedTime() >= self._attackCheckTime))
                     {
                         self._attackChkOnce = true;
-                        PhotonNetwork.Instantiate("FX/colossal_steam", self._transform.Position + ((Vector3) (self._transform.up * 185.0)), Quaternion.Euler(270f, 0.0, 0.0), 0);
-                        PhotonNetwork.Instantiate("FX/colossal_steam", self._transform.Position + ((Vector3) (self._transform.up * 303f)), Quaternion.Euler(270f, 0.0, 0.0), 0);
-                        PhotonNetwork.Instantiate("FX/colossal_steam", self._transform.Position + ((Vector3) (self._transform.up * 50.0)), Quaternion.Euler(270f, 0.0, 0.0), 0);
+                        /*
+                        PhotonNetwork.Instantiate("FX/colossal_steam", self._transform.Position + ((Vector3) (self._transform.up * 185.0)), Quaternion.Euler(270.0, 0.0, 0.0), 0);
+                        PhotonNetwork.Instantiate("FX/colossal_steam", self._transform.Position + ((Vector3) (self._transform.up * 303f)), Quaternion.Euler(270.0, 0.0, 0.0), 0);
+                        PhotonNetwork.Instantiate("FX/colossal_steam", self._transform.Position + ((Vector3) (self._transform.up * 50.0)), Quaternion.Euler(270.0, 0.0, 0.0), 0);
+                        */
                     }
-                    if (self._animation[self._actionName].normalizedTime >= 1.0)
+                    if (self.GetAnimationNormalizedTime() >= 1.0)
                     {
-                        GameObject obj5 = PhotonNetwork.Instantiate("FX/colossal_steam_dmg", self._transform.Position + ((Vector3) (self._transform.up * 185.0)), Quaternion.Euler(270f, 0.0, 0.0), 0);
-                        if (obj5.GetComponent<EnemyfxIDcontainer>() != null)
-                        {
-                            obj5.GetComponent<EnemyfxIDcontainer>().titanName = self.Name;
-                        }
-                        obj5 = PhotonNetwork.Instantiate("FX/colossal_steam_dmg", self._transform.Position + ((Vector3) (self._transform.up * 303f)), Quaternion.Euler(270f, 0.0, 0.0), 0);
-                        if (obj5.GetComponent<EnemyfxIDcontainer>() != null)
-                        {
-                            obj5.GetComponent<EnemyfxIDcontainer>().titanName = self.Name;
-                        }
-                        obj5 = PhotonNetwork.Instantiate("FX/colossal_steam_dmg", self._transform.Position + ((Vector3) (self._transform.up * 50.0)), Quaternion.Euler(270f, 0.0, 0.0), 0);
-                        if (obj5.GetComponent<EnemyfxIDcontainer>() != null)
-                        {
-                            obj5.GetComponent<EnemyfxIDcontainer>().titanName = self.Name;
-                        }
+                        /*
+                        obj1 = PhotonNetwork.Instantiate("FX/colossal_steam_dmg", self._transform.Position + ((Vector3) (self._transform.up * 185.0)), Quaternion.Euler(270.0, 0.0, 0.0), 0);
+                        obj2 = PhotonNetwork.Instantiate("FX/colossal_steam_dmg", self._transform.Position + ((Vector3) (self._transform.up * 303f)), Quaternion.Euler(270.0, 0.0, 0.0), 0);
+                        obj3 = PhotonNetwork.Instantiate("FX/colossal_steam_dmg", self._transform.Position + ((Vector3) (self._transform.up * 50.0)), Quaternion.Euler(270.0, 0.0, 0.0), 0);
+                        if (obj1.GetComponent<EnemyfxIDcontainer>() != null) obj1.GetComponent<EnemyfxIDcontainer>().titanName = self.Name;
+                        if (obj2.GetComponent<EnemyfxIDcontainer>() != null) obj2.GetComponent<EnemyfxIDcontainer>().titanName = self.Name;
+                        if (obj3.GetComponent<EnemyfxIDcontainer>() != null) obj3.GetComponent<EnemyfxIDcontainer>().titanName = self.Name;
+                        */
                         if (self._hasDie)
                         {
+                            Game.End(10.0);
+                            UI.SetLabel("MiddleCenter", "Humanity win!");
                             if (Network.IsMasterClient)
                             {
-                                PhotonNetwork.Destroy(self.photonView);
+                                self._transform.Position = Vector3.Down * 1000.0;
+                                Map.DestroyMapObject(self.MapObject, true);
                             }
-                            GameObject.Find("MultiplayerManager").GetComponent<FengGameManagerMKII>().gameWin2();
                         }
                         self.findNearestHero();
                         self.idle();
@@ -417,36 +376,6 @@ component ColossalTitan
                         {
                             self.steam();
                         }
-                        switch (Random.RandomInt(0, 7))
-                        {
-                            case 0:
-                                self.slap("l1");
-                                break;
-
-                            case 1:
-                                self.slap("l2");
-                                break;
-
-                            case 2:
-                            self.slap("r1");
-                                break;
-
-                            case 3:
-                                self.slap("r2");
-                                break;
-
-                            case 4:
-                                self.attack_sweep("");
-                                break;
-
-                            case 5:
-                                self.attack_sweep("_vertical");
-                                break;
-
-                            case 6:
-                                self.steam();
-                                break;
-                        }
                     }
                 }
             }
@@ -538,12 +467,12 @@ component ColossalTitan
         }
     }
 
-    function blowPlayer(human, neck)
+    function blowPlayer(human)
     {
-        vector = Vector3.Zero - ((neck.Position + self._transform.Forward * 50.0) - human.Position);
+        vector = Vector3.Zero - (self._neck.Position + self._transform.Forward * 50.0 - human.Position);
         if (Network.IsMasterClient)
         {
-            force = ((vector.normalized * 20.0) + Vector3.Up);
+            force = vector.normalized * 20.0 + Vector3.Up;
             human.Velocity = force;
         }
     }
@@ -570,6 +499,7 @@ component ColossalTitan
             }
             GameObject obj3 = (GameObject) list[Random.RandomInt(0, list.Count)];
             */
+            obj3 = ListX.Random(Map.FindMapObjectsByTag("titanRespawn"));
             type == "Normal";
             if (special == true)
             {
@@ -621,6 +551,7 @@ component ColossalTitan
                 titan.activeRad = 0;
                 titan.toCheckPoint((Vector3) titan.GetComponent<TITAN>().checkPoints[0], 10.0);
                 */
+                titan.MoveTo(self._civillians, 200, true);
             }
             Game.SpawnEffect("TitanSpawn", titan.transform.Position, Vector3(0-90.0, 0.0, 0.0), titan.transform.Scale);
         }
@@ -631,14 +562,14 @@ component ColossalTitan
         self._attackCount += 1;
         num = 4;
         num2 = 7;
-        if (self._difficulty != 0)
+        if (self._difficulty > 1)
         {
-            if (self._difficulty == 1)
+            if (self._difficulty == 2)
             {
                 num = 4;
                 num2 = 6;
             }
-            elif (self._difficulty == 2)
+            elif (self._difficulty == 3)
             {
                 num = 3;
                 num2 = 5;
@@ -677,10 +608,17 @@ component ColossalTitan
     function crossFade(aniName, time)
     {
         self._animation.ChangeAnimation(aniName, time);
+        self._animationStart = Time.GameTime;
+        self._animationLength = self._transform.GetAnimationLength(aniName);
         if (Network.IsMasterClient == true)
         {
-            self.NetworkView.SendMessageOthers("netCrossFadeRPC|"+aniName+"/"+time);
+            self.NetworkView.SendMessageOthers("netCrossFadeRPC|" + aniName + "/" + time);
         }
+    }
+    
+    function GetAnimationNormalizedTime()
+    {
+        return (Time.GameTime - self._animationStart) / self._animationLength;
     }
 
     function findNearestHero()
@@ -730,9 +668,9 @@ component ColossalTitan
                 self._healthLabel.transform.parent = self._transform;
                 self._healthLabel.transform.localPosition = new Vector3(0f, 430f, 0.0);
                 float a = 15f;
-                if ((self.Scale > 0.0) && (self.Scale < 1.0))
+                if ((self._scale > 0.0) && (self._scale < 1.0))
                 {
-                    a = 15f / self.Scale;
+                    a = 15f / self._scale;
                     a = Math.Min(a, 100f);
                 }
                 self._healthLabel.transform.Scale = new Vector3(a, a, a);
@@ -766,14 +704,14 @@ component ColossalTitan
         self._isSteamNeed = true;
         radius = 30.0;
         /*
-        for (Collider collider in Physics.OverlapSphere(neck.transform.Position - ((self._transform.Forward * 10.0)), radius))
+        for (Collider collider in Physics.OverlapSphere(self._neck.transform.Position - ((self._transform.Forward * 10.0)), radius))
         {
             if (collider.transform.root.tag == "Player")
             {
                 GameObject gameObject = collider.transform.root.gameObject;
                 if ((gameObject.GetComponent<TITAN_EREN>() == null) && (gameObject.GetComponent<HERO>() != null))
                 {
-                    self.blowPlayer(gameObject, neck);
+                    self.blowPlayer(gameObject);
                 }
             }
         }
@@ -820,7 +758,7 @@ component ColossalTitan
 
     function setSize(size)
     {
-        self.Scale = Math.Clamp(size, 0.1, 50.0);
+        self._scale = Math.Clamp(size, 0.1, 50.0);
         self._transform.Scale = self._transform.Scale * size * 0.05;
     }
 
@@ -967,6 +905,7 @@ extension Utils
         return closest;
     }
 }
+
 extension MathX
 {
     function Atan2(y, x)
@@ -995,4 +934,43 @@ extension MathX
     }
 
     function DeltaAngle(current, target)
+    {
+        return 0.0;
+    }
+}
+
+extension ListX
+{
+    function IndexOf(list, obj)
+    {
+        for (i in Range(0, list.Count, 1))
+        {
+            if (list.Get(i) == obj)
+            {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    function Contains(list, obj)
+    {
+        for (element in list)
+        {
+            if (element == obj)
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    function Random(list)
+    {
+        if (list.Count == 0)
+        {
+            return null;
+        }
+        return list.Get(Random.RandomInt(0, list.Count));
+    }
 }
