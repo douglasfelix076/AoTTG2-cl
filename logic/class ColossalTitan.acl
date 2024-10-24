@@ -37,13 +37,495 @@ component ColossalTitan
     _healthLabel = null;
     _isSteamNeed = false;
 
+    function Init()
+    {
+        self._transform = self.MapObject.Transform;
+        self._animation = self.MapObject.GetComponent("Animator");
+        self._difficulty = Game.GetGeneralSetting("Difficulty");
+        self._neck = self._transform.GetTransform("Amarture/Core/Controller_Body/hip/spine/chest/neck");
+        self._neckSteamObject = self._transform.GetTransform("...");
+        self._sweepSmokeObject = self._transform.GetTransform("...");
+        self.startMain();
+        self.Scale = 20.0;
+        /*
+        if (Minimap.instance != null)
+        {
+            Minimap.instance.TrackGameObjectOnMinimap(self.gameObject, Color.black, false, true, Minimap.IconStyle.CIRCLE);
+        }
+        */
+        if (Network.IsMasterClient == true)
+        {
+            if (Game.GetTitanSetting("TitanSpawnEnabled") == true)
+            {
+                min = Game.GetTitanSetting("TitanSizeMin");
+                max = Game.GetTitanSetting("TitanSizeMax");
+                self.Scale = Random.RandomFloat(min, max);
+            }
+            self.lagMax = 150.0 + (self.Scale * 3.0);
+            self.healthTime = 0.0;
+            self.maxHealth = self.NapeArmor;
+            if (Game.GetTitanSetting("TitanHealthMode") > 0)
+            {
+                min = Game.GetTitanSetting("TitanHealthMin");
+                max = Game.GetTitanSetting("TitanHealthMax");
+                health = Random.RandomFloat(min, max);
+                self.maxHealth = health;
+                self.NapeArmor = health;
+            }
+            if (self.NapeArmor > 0)
+            {
+                #self.NetworkView.SendMessage("labelRPC", PhotonTargets.AllBuffered, new object[] { self.NapeArmor, self.maxHealth });
+            }
+        }
+        self._hasspawn = true;
+    }
+
+    function startMain()
+    {
+        if (self._myHero == null)
+        {
+            self.findNearestHero();
+        }
+        self.NapeArmor = 1000;
+        flag = Game.GetMiscSetting("EndlessRespawnEnabled");
+        if (self._difficulty == 0)
+        {
+            if (flag == false)
+            {
+                self.NapeArmor = 5000;
+            }
+            else
+            {
+                self.NapeArmor = 2000;
+            }
+        }
+        elif (self._difficulty == 1)
+        {
+            if (flag == false)
+            {
+                self.NapeArmor = 8000;
+            }
+            else
+            {
+                self.NapeArmor = 3500;
+            }
+            /*
+            IEnumerator enumerator = self._animation.GetEnumerator();
+            try
+            {
+                while (enumerator.MoveNext())
+                {
+                    AnimationState current = (AnimationState) enumerator.Current;
+                    current.speed = 1.02f;
+                }
+            }
+            finally
+            {
+                IDisposable disposable = enumerator as IDisposable;
+                if (disposable != null)
+                	disposable.Dispose();
+            }
+            */
+        }
+        elif (self._difficulty == 2)
+        {
+            if (flag == false)
+            {
+                self.NapeArmor = 12000;
+            }
+            else
+            {
+                self.NapeArmor = 5000;
+            }
+            /*
+            IEnumerator enumerator2 = self._animation.GetEnumerator();
+            try
+            {
+                while (enumerator2.MoveNext())
+                {
+                    AnimationState state2 = (AnimationState) enumerator2.Current;
+                    state2.speed = 1.05;
+                }
+            }
+            finally
+            {
+                IDisposable disposable2 = enumerator2 as IDisposable;
+                if (disposable2 != null)
+                	disposable2.Dispose();
+            }
+            */
+        }
+        self._state = "wait";
+        self.NapeArmorTotal = self.NapeArmor;
+        self._transform.Position = Vector3.Down * 10000.0;
+        self._door_broken = GameObject.Find("_door_broke");
+        self._door_closed = GameObject.Find("_door_fine");
+        self._door_broken.Active = false;
+        self._door_closed.Active = true;
+    }
+
+    function OnTick()
+    {
+        self.healthTime -= Time.TickTime;
+        self.updateLabel();
+        if (self._state != "null")
+        {
+            if (self._state == "wait")
+            {
+                self._waitTime -= Time.TickTime;
+                if (self._waitTime <= 0.0)
+                {
+                    self._transform.Position = new Vector3(30.0, 0.0, 784.0);
+                    #UnityEngine.Object.Instantiate(Resources.Load("FX/ThunderCT"), self._transform.Position + ((Vector3) (Vector3.Up * 350.0)), Quaternion.Euler(270f, 0.0, 0.0));
+                    #Camera.main.GetComponent<IN_GAME_MAIN_CAMERA>().flashBlind();
+                    if (Network.IsMasterClient == true)
+                    {
+                        self.idle();
+                    }
+                    else
+                    {
+                        self._state = "null";
+                    }
+                }
+            }
+            elif (self._state != "idle")
+            {
+                if (self._state == "attack_sweep")
+                {
+                    if ((self._attackCheckTimeA != 0.0) && (((self._animation["attack_" + self._attackAnimation].normalizedTime >= self._attackCheckTimeA) && (self._animation["attack_" + self._attackAnimation].normalizedTime <= self._attackCheckTimeB)) || (!self._attackChkOnce && (self._animation["attack_" + self._attackAnimation].normalizedTime >= self._attackCheckTimeA))))
+                    {
+                        self._attackChkOnce = true;
+                        /*
+                        for (RaycastHit hit in self._checkHitCapsule(self._checkHitCapsuleStart.Position, self._checkHitCapsuleEnd.Position, self._checkHitCapsuleR))
+                        {
+                            GameObject gameObject = hit.collider.gameObject;
+                            if (gameObject.tag == "Player")
+                            {
+                                self.killPlayer(gameObject);
+                            }
+                            if ((((gameObject.tag == "erenHitbox") && (self._attackAnimation == "combo_3"))) && (!false ? Network.IsMasterClient : Network.isServer))
+                            {
+                                gameObject.transform.root.gameObject.GetComponent<TITAN_EREN>().hitByFTByServer(3);
+                            }
+                        }
+                        for (RaycastHit hit2 in self._checkHitCapsule(self._checkHitCapsuleEndOld, self._checkHitCapsuleEnd.Position, self._checkHitCapsuleR))
+                        {
+                            GameObject hitHero = hit2.collider.gameObject;
+                            if (hitHero.tag == "Player")
+                            {
+                                self.killPlayer(hitHero);
+                            }
+                        }
+                        */
+                        self._checkHitCapsuleEndOld = self._checkHitCapsuleEnd.Position;
+                    }
+                    if (self._animation["attack_" + self._attackAnimation].normalizedTime >= 1.0)
+                    {
+                        self._sweepSmokeObject.ToggleParticle(false);
+                        if (!((IN_GAME_MAIN_CAMERA.gametype != GAMETYPE.MULTIPLAYER) || false))
+                        {
+                            self.NetworkView.SendMessageOthers("stopSweepSmokeRPC", PhotonTargets.Others);
+                        }
+                        self.findNearestHero();
+                        self.idle();
+                        self.playAnimation("idle");
+                    }
+                }
+                elif (self._state == "kick")
+                {
+                    if (!self._attackChkOnce && (self._animation[self._actionName].normalizedTime >= self._attackCheckTime))
+                    {
+                        self._attackChkOnce = true;
+                        self._door_broken.Active = true;
+                        self._door_closed.Active = false;
+                        if (!((IN_GAME_MAIN_CAMERA.gametype != GAMETYPE.MULTIPLAYER) || false))
+                        {
+                            #self.NetworkView.SendMessageOthers("changeDoorRPC", PhotonTargets.OthersBuffered);
+                        }
+                        PhotonNetwork.Instantiate("FX/boom1_CT_KICK", (Vector3) ((self._transform.Position + (self._transform.Forward * 120f)) + (self._transform.right * 30.0)), Quaternion.Euler(270f, 0.0, 0.0), 0);
+                        PhotonNetwork.Instantiate("rock", (Vector3) ((self._transform.Position + (self._transform.Forward * 120f)) + (self._transform.right * 30.0)), Quaternion.Euler(0f, 0.0, 0.0), 0);
+                    }
+                    if (self._animation[self._actionName].normalizedTime >= 1.0)
+                    {
+                        self.findNearestHero();
+                        self.idle();
+                        self.playAnimation("idle");
+                    }
+                }
+                elif (self._state == "slap")
+                {
+                    if (!self._attackChkOnce && (self._animation["attack_slap_" + self._attackAnimation].normalizedTime >= self._attackCheckTime))
+                    {
+                        GameObject obj4;
+                        self._attackChkOnce = true;
+                        obj4 = PhotonNetwork.Instantiate("FX/boom1", self._checkHitCapsuleStart.Position, Quaternion.Euler(270f, 0.0, 0.0), 0);
+                        if (obj4.GetComponent<EnemyfxIDcontainer>() != null)
+                        {
+                            obj4.GetComponent<EnemyfxIDcontainer>().titanName = self.Name;
+                        }
+                        obj4.transform.Scale = new Vector3(5f, 5f, 5f);
+                    }
+                    if (self._animation["attack_slap_" + self._attackAnimation].normalizedTime >= 1.0)
+                    {
+                        self.findNearestHero();
+                        self.idle();
+                        self.playAnimation("idle");
+                    }
+                }
+                elif (self._state == "steam")
+                {
+                    if (!self._attackChkOnce && (self._animation[self._actionName].normalizedTime >= self._attackCheckTime))
+                    {
+                        self._attackChkOnce = true;
+                        PhotonNetwork.Instantiate("FX/colossal_steam", self._transform.Position + ((Vector3) (self._transform.up * 185.0)), Quaternion.Euler(270f, 0.0, 0.0), 0);
+                        PhotonNetwork.Instantiate("FX/colossal_steam", self._transform.Position + ((Vector3) (self._transform.up * 303f)), Quaternion.Euler(270f, 0.0, 0.0), 0);
+                        PhotonNetwork.Instantiate("FX/colossal_steam", self._transform.Position + ((Vector3) (self._transform.up * 50.0)), Quaternion.Euler(270f, 0.0, 0.0), 0);
+                    }
+                    if (self._animation[self._actionName].normalizedTime >= 1.0)
+                    {
+                        GameObject obj5 = PhotonNetwork.Instantiate("FX/colossal_steam_dmg", self._transform.Position + ((Vector3) (self._transform.up * 185.0)), Quaternion.Euler(270f, 0.0, 0.0), 0);
+                        if (obj5.GetComponent<EnemyfxIDcontainer>() != null)
+                        {
+                            obj5.GetComponent<EnemyfxIDcontainer>().titanName = self.Name;
+                        }
+                        obj5 = PhotonNetwork.Instantiate("FX/colossal_steam_dmg", self._transform.Position + ((Vector3) (self._transform.up * 303f)), Quaternion.Euler(270f, 0.0, 0.0), 0);
+                        if (obj5.GetComponent<EnemyfxIDcontainer>() != null)
+                        {
+                            obj5.GetComponent<EnemyfxIDcontainer>().titanName = self.Name;
+                        }
+                        obj5 = PhotonNetwork.Instantiate("FX/colossal_steam_dmg", self._transform.Position + ((Vector3) (self._transform.up * 50.0)), Quaternion.Euler(270f, 0.0, 0.0), 0);
+                        if (obj5.GetComponent<EnemyfxIDcontainer>() != null)
+                        {
+                            obj5.GetComponent<EnemyfxIDcontainer>().titanName = self.Name;
+                        }
+                        if (self._hasDie)
+                        {
+                            if (Network.IsMasterClient)
+                            {
+                                PhotonNetwork.Destroy(self.photonView);
+                            }
+                            GameObject.Find("MultiplayerManager").GetComponent<FengGameManagerMKII>().gameWin2();
+                        }
+                        self.findNearestHero();
+                        self.idle();
+                        self.playAnimation("idle");
+                    }
+                }
+            }
+            elif (self._attackPattern == 0-1)
+            {
+                self.slap("r1");
+                self._attackPattern += 1;
+            }
+            elif (self._attackPattern == 0)
+            {
+                self.attack_sweep("");
+                self._attackPattern += 1;
+            }
+            elif (self._attackPattern == 1)
+            {
+                self.steam();
+                self._attackPattern += 1;
+            }
+            elif (self._attackPattern == 2)
+            {
+                self.kick();
+                self._attackPattern += 1;
+            }
+            elif (self._isSteamNeed == true || self._hasDie == true)
+            {
+                self.steam();
+                self._isSteamNeed = false;
+            }
+            elif (self._myHero == null)
+            {
+                self.findNearestHero();
+            }
+            else
+            {
+                vector = self._myHero.transform.Position - self._transform.Position;
+                current = 0 - MathX.Atan2(vector.z, vector.x) * Math.Rad2DegConstant;
+                f = 0 - MathX.DeltaAngle(current, self._transform.Rotation.y - 90.0);
+                self.myDistance = vector.Magnitude;
+                num4 = self._myHero.transform.Position.y - self._transform.Position.y;
+                if (self.myDistance < 85.0 && Random.RandomInt(0, 100) < 5)
+                {
+                    self.steam();
+                }
+                else
+                {
+                    if (num4 > 310.0 && num4 < 350.0)
+                    {
+                        if (Vector3.Distance(self._myHero.transform.Position, self._transform.GetTransform("APL1").Position) < 40.0)
+                        {
+                            self.slap("l1");
+                            return;
+                        }
+                        if (Vector3.Distance(self._myHero.transform.Position, self._transform.GetTransform("APL2").Position) < 40.0)
+                        {
+                            self.slap("l2");
+                            return;
+                        }
+                        if (Vector3.Distance(self._myHero.transform.Position, self._transform.GetTransform("APR1").Position) < 40.0)
+                        {
+                            self.slap("r1");
+                            return;
+                        }
+                        if (Vector3.Distance(self._myHero.transform.Position, self._transform.GetTransform("APR2").Position) < 40.0)
+                        {
+                            self.slap("r2");
+                            return;
+                        }
+                        if (self.myDistance < 150.0 && Math.Abs(f) < 80.0)
+                        {
+                            self.attack_sweep("");
+                            return;
+                        }
+                    }
+                    if (num4 < 300.0 && Math.Abs(f) < 80.0 && self.myDistance < 85.0)
+                    {
+                        self.attack_sweep("_vertical");
+                    }
+                    else
+                    {
+                        attack = Random.RandomInt(0, 7);
+                        if (attack == 0)
+                        {
+                            self.slap("l1");
+                        }
+                        elif (attack == 1)
+                        {
+                            self.slap("l2");
+                        }
+                        elif (attack == 2)
+                        {
+                            self.slap("r1");
+                        }
+                        elif (attack == 3)
+                        {
+                            self.slap("r2");
+                        }
+                        elif (attack == 4)
+                        {
+                            self.attack_sweep("");
+                        }
+                        elif (attack == 5)
+                        {
+                            self.attack_sweep("_vertical");
+                        }
+                        elif (attack == 6)
+                        {
+                            self.steam();
+                        }
+                        switch (Random.RandomInt(0, 7))
+                        {
+                            case 0:
+                                self.slap("l1");
+                                break;
+
+                            case 1:
+                                self.slap("l2");
+                                break;
+
+                            case 2:
+                            self.slap("r1");
+                                break;
+
+                            case 3:
+                                self.slap("r2");
+                                break;
+
+                            case 4:
+                                self.attack_sweep("");
+                                break;
+
+                            case 5:
+                                self.attack_sweep("_vertical");
+                                break;
+
+                            case 6:
+                                self.steam();
+                                break;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    function OnNetworkMessage(sender, message) 
+    {
+        #Game.Print("<color=white>(" + self.NetworkPlayer.ID + ") PLAYER RPC:</color> <color=green>" + message + "</color>");
+
+        split = String.Split(message, "|");
+
+        if (split.Count < 1)
+        {
+            return;
+        }
+
+        if (call == "changeDoorRPC")
+        {
+            self.changeDoor();
+        }
+        elif (call == "labelRPC")
+        {
+            health = Convert.ToInt(args.Get(0));
+            maxHealth = Convert.ToInt(args.Get(0));
+            self.labelRPC(health, maxHealth);
+        }
+        elif (call == "netCrossFadeRPC")
+        {
+            aniName = args.Get(0);
+            time = Convert.ToFloat(args.Get(0));
+            self.netCrossFade(aniName, time);
+        }
+        elif (call == "netDieRPC")
+        {
+            self.netDie();
+        }
+        elif (call == "netPlayAnimationRPC")
+        {
+            aniName = args.Get(0);
+            self.netPlayAnimation(aniName);
+        }
+        elif (call == "playsoundRPC")
+        {
+            sndname = args.Get(0);
+            self.playsoundRPC();
+        }
+        elif (call == "setSizeRPC")
+        {
+            size = Convert.ToInt(args.Get(0));
+            self.setSize(size);
+        }
+        elif (call == "startNeckSteamRPC")
+        {
+            self.startNeckSteam();
+        }
+        elif (call == "startSweepSmokeRPC")
+        {
+            self.startSweepSmoke();
+        }
+        elif (call == "stopSweepSmokeRPC")
+        {
+            self.stopSweepSmoke();
+        }
+        elif (call == "titanGetHitRPC")
+        {
+            viewID = Convert.ToInt(args.Get(0));
+            speed = Convert.ToInt(args.Get(1));
+            self.titanGetHit(viewID, speed);
+        }
+    }
+
     function attack_sweep(type)
     {
         self.callTitanHAHA();
         self._state = "attack_sweep";
         self._attackAnimation = "sweep" + type;
         self._attackCheckTimeA = 0.4;
-        self._attackCheckTimeB = 0.57f;
+        self._attackCheckTimeB = 0.57;
         self._checkHitCapsuleStart = self._transform.GetTransform("Amarture/Core/Controller_Body/hip/spine/chest/shoulder_R/upper_arm_R/forearm_R");
         self._checkHitCapsuleEnd = self._transform.GetTransform("Amarture/Core/Controller_Body/hip/spine/chest/shoulder_R/upper_arm_R/forearm_R/hand_R/hand_R_001");
         self._checkHitCapsuleR = 20.0;
@@ -52,7 +534,7 @@ component ColossalTitan
         self._sweepSmokeObject.ToggleParticle(true);
         if (Network.IsMasterClient == true)
         {
-            self.NetworkView.SendMessageOthers("startSweepSmokeRPC", PhotonTargets.Others);
+            self.NetworkView.SendMessageOthers("startSweepSmokeRPC");
         }
     }
 
@@ -253,7 +735,7 @@ component ColossalTitan
                     a = 15f / self.Scale;
                     a = Math.Min(a, 100f);
                 }
-                self._healthLabel.transform.localScale = new Vector3(a, a, a);
+                self._healthLabel.transform.Scale = new Vector3(a, a, a);
             }
             string str = "[7FFF00]";
             float num2 = Convert.ToFloat(health)) / Convert.ToFloat(maxHealth);
@@ -327,21 +809,19 @@ component ColossalTitan
         self.playsoundRPC(sndname);
         if (Network.IsMasterClient)
         {
-            self.NetworkView.SendMessageOthers("playsoundRPC", PhotonTargets.Others, sndname);
+            self.NetworkView.SendMessageOthers("playsoundRPC|" + sndname);
         }
     }
 
     function playsoundRPC(sndname)
     {
-        self._transform.GetTransform(sndname).GetComponent<AudioSource>().Play();
+        self._transform.GetTransform(sndname).PlaySound();
     }
 
-    function setSize(float size)
+    function setSize(size)
     {
         self.Scale = Math.Clamp(size, 0.1, 50.0);
-            Transform transform = self._transform;
-            transform.localScale = (Vector3) (transform.localScale * (size * 0.05f));
-            self.Scale = size;
+        self._transform.Scale = self._transform.Scale * size * 0.05;
     }
 
     function slap(type)
@@ -349,145 +829,17 @@ component ColossalTitan
         self.callTitanHAHA();
         self._state = "slap";
         self._attackAnimation = type;
-        if ((type == "r1") || (type == "r2"))
+        if (type == "r1" || type == "r2")
         {
             self._checkHitCapsuleStart = self._transform.GetTransform("Amarture/Core/Controller_Body/hip/spine/chest/shoulder_R/upper_arm_R/forearm_R/hand_R/hand_R_001");
         }
-        if ((type == "l1") || (type == "l2"))
+        if (type == "l1" || type == "l2")
         {
             self._checkHitCapsuleStart = self._transform.GetTransform("Amarture/Core/Controller_Body/hip/spine/chest/shoulder_L/upper_arm_L/forearm_L/hand_L/hand_L_001");
         }
-        self._attackCheckTime = 0.57f;
+        self._attackCheckTime = 0.57;
         self._attackChkOnce = false;
         self.crossFade("attack_slap_" + self._attackAnimation, 0.1);
-    }
-
-    function Init()
-    {
-        self._transform = self.MapObject.Transform;
-        self._animation = self.MapObject.GetComponent("Animator");
-        self._difficulty = Game.GetGeneralSetting("Difficulty");
-        self._neck = self._transform.GetTransform("Amarture/Core/Controller_Body/hip/spine/chest/neck");
-        self._neckSteamObject = self._transform.GetTransform("...");
-        self._sweepSmokeObject = self._transform.GetTransform("...");
-        self.startMain();
-        self.Scale = 20.0;
-        /*
-        if (Minimap.instance != null)
-        {
-            Minimap.instance.TrackGameObjectOnMinimap(self.gameObject, Color.black, false, true, Minimap.IconStyle.CIRCLE);
-        }
-        */
-        if (Network.IsMasterClient == true)
-        {
-            if (Game.GetTitanSetting("TitanSpawnEnabled") == true)
-            {
-                min = Game.GetTitanSetting("TitanSizeMin");
-                max = Game.GetTitanSetting("TitanSizeMax");
-                self.Scale = Random.RandomFloat(min, max);
-            }
-            self.lagMax = 150.0 + (self.Scale * 3.0);
-            self.healthTime = 0.0;
-            self.maxHealth = self.NapeArmor;
-            if (Game.GetTitanSetting("TitanHealthMode") > 0)
-            {
-                min = Game.GetTitanSetting("TitanHealthMin");
-                max = Game.GetTitanSetting("TitanHealthMax");
-                health = Random.RandomFloat(min, max);
-                self.maxHealth = health;
-                self.NapeArmor = health;
-            }
-            if (self.NapeArmor > 0)
-            {
-                #self.NetworkView.SendMessage("labelRPC", PhotonTargets.AllBuffered, new object[] { self.NapeArmor, self.maxHealth });
-            }
-        }
-        self._hasspawn = true;
-    }
-
-    function startMain()
-    {
-        if (self._myHero == null)
-        {
-            self.findNearestHero();
-        }
-        self.NapeArmor = 1000;
-        flag = Game.GetMiscSetting("EndlessRespawnEnabled");
-        if (self._difficulty == 0)
-        {
-            if (flag == false)
-            {
-                self.NapeArmor = 5000;
-            }
-            else
-            {
-                self.NapeArmor = 2000;
-            }
-        }
-        elif (self._difficulty == 1)
-        {
-            if (flag == false)
-            {
-                self.NapeArmor = 8000;
-            }
-            else
-            {
-                self.NapeArmor = 3500;
-            }
-            /*
-            IEnumerator enumerator = self._animation.GetEnumerator();
-            try
-            {
-                while (enumerator.MoveNext())
-                {
-                    AnimationState current = (AnimationState) enumerator.Current;
-                    current.speed = 1.02f;
-                }
-            }
-            finally
-            {
-                IDisposable disposable = enumerator as IDisposable;
-                if (disposable != null)
-                	disposable.Dispose();
-            }
-            */
-        }
-        elif (self._difficulty == 2)
-        {
-            if (flag == false)
-            {
-                self.NapeArmor = 12000;
-            }
-            else
-            {
-                self.NapeArmor = 5000;
-            }
-            /*
-            IEnumerator enumerator2 = self._animation.GetEnumerator();
-            try
-            {
-                while (enumerator2.MoveNext())
-                {
-                    AnimationState state2 = (AnimationState) enumerator2.Current;
-                    state2.speed = 1.05f;
-                }
-            }
-            finally
-            {
-                IDisposable disposable2 = enumerator2 as IDisposable;
-                if (disposable2 != null)
-                	disposable2.Dispose();
-            }
-            */
-        }
-        self.NapeArmorTotal = self.NapeArmor;
-        self._state = "wait";
-        Transform transform = self._transform;
-        transform.Position += (Vector3) (Vector3.down * 10000f);
-        self._door_broken = GameObject.Find("_door_broke");
-        self._door_closed = GameObject.Find("_door_fine");
-        self._door_broken.Active = false;
-        self._door_closed.Active = true;
     }
 
     function startNeckSteam()
@@ -555,335 +907,6 @@ component ColossalTitan
         }
     }
 
-    function OnTick()
-    {
-        self.healthTime -= Time.TickTime;
-        self.updateLabel();
-        if (self._state != "null")
-        {
-            if (self._state == "wait")
-            {
-                self._waitTime -= Time.TickTime;
-                if (self._waitTime <= 0.0)
-                {
-                    self._transform.Position = new Vector3(30.0, 0.0, 784.0);
-                    #UnityEngine.Object.Instantiate(Resources.Load("FX/ThunderCT"), self._transform.Position + ((Vector3) (Vector3.Up * 350f)), Quaternion.Euler(270f, 0.0, 0.0));
-                    #Camera.main.GetComponent<IN_GAME_MAIN_CAMERA>().flashBlind();
-                    if (Network.IsMasterClient == true)
-                    {
-                        self.idle();
-                    }
-                    else
-                    {
-                        self._state = "null";
-                    }
-                }
-            }
-            elif (self._state != "idle")
-            {
-                if (self._state == "attack_sweep")
-                {
-                    if ((self._attackCheckTimeA != 0.0) && (((self._animation["attack_" + self._attackAnimation].normalizedTime >= self._attackCheckTimeA) && (self._animation["attack_" + self._attackAnimation].normalizedTime <= self._attackCheckTimeB)) || (!self._attackChkOnce && (self._animation["attack_" + self._attackAnimation].normalizedTime >= self._attackCheckTimeA))))
-                    {
-                        self._attackChkOnce = true;
-                        /*
-                        for (RaycastHit hit in self._checkHitCapsule(self._checkHitCapsuleStart.Position, self._checkHitCapsuleEnd.Position, self._checkHitCapsuleR))
-                        {
-                            GameObject gameObject = hit.collider.gameObject;
-                            if (gameObject.tag == "Player")
-                            {
-                                self.killPlayer(gameObject);
-                            }
-                            if ((((gameObject.tag == "erenHitbox") && (self._attackAnimation == "combo_3"))) && (!false ? Network.IsMasterClient : Network.isServer))
-                            {
-                                gameObject.transform.root.gameObject.GetComponent<TITAN_EREN>().hitByFTByServer(3);
-                            }
-                        }
-                        for (RaycastHit hit2 in self._checkHitCapsule(self._checkHitCapsuleEndOld, self._checkHitCapsuleEnd.Position, self._checkHitCapsuleR))
-                        {
-                            GameObject hitHero = hit2.collider.gameObject;
-                            if (hitHero.tag == "Player")
-                            {
-                                self.killPlayer(hitHero);
-                            }
-                        }
-                        */
-                        self._checkHitCapsuleEndOld = self._checkHitCapsuleEnd.Position;
-                    }
-                    if (self._animation["attack_" + self._attackAnimation].normalizedTime >= 1.0)
-                    {
-                        self._sweepSmokeObject.ToggleParticle(false);
-                        if (!((IN_GAME_MAIN_CAMERA.gametype != GAMETYPE.MULTIPLAYER) || false))
-                        {
-                            self.NetworkView.SendMessageOthers("stopSweepSmokeRPC", PhotonTargets.Others);
-                        }
-                        self.findNearestHero();
-                        self.idle();
-                        self.playAnimation("idle");
-                    }
-                }
-                elif (self._state == "kick")
-                {
-                    if (!self._attackChkOnce && (self._animation[self._actionName].normalizedTime >= self._attackCheckTime))
-                    {
-                        self._attackChkOnce = true;
-                        self._door_broken.Active = true;
-                        self._door_closed.Active = false;
-                        if (!((IN_GAME_MAIN_CAMERA.gametype != GAMETYPE.MULTIPLAYER) || false))
-                        {
-                            #self.NetworkView.SendMessageOthers("changeDoorRPC", PhotonTargets.OthersBuffered);
-                        }
-                        PhotonNetwork.Instantiate("FX/boom1_CT_KICK", (Vector3) ((self._transform.Position + (self._transform.Forward * 120f)) + (self._transform.right * 30.0)), Quaternion.Euler(270f, 0.0, 0.0), 0);
-                        PhotonNetwork.Instantiate("rock", (Vector3) ((self._transform.Position + (self._transform.Forward * 120f)) + (self._transform.right * 30.0)), Quaternion.Euler(0f, 0.0, 0.0), 0);
-                    }
-                    if (self._animation[self._actionName].normalizedTime >= 1.0)
-                    {
-                        self.findNearestHero();
-                        self.idle();
-                        self.playAnimation("idle");
-                    }
-                }
-                elif (self._state == "slap")
-                {
-                    if (!self._attackChkOnce && (self._animation["attack_slap_" + self._attackAnimation].normalizedTime >= self._attackCheckTime))
-                    {
-                        GameObject obj4;
-                        self._attackChkOnce = true;
-                        obj4 = PhotonNetwork.Instantiate("FX/boom1", self._checkHitCapsuleStart.Position, Quaternion.Euler(270f, 0.0, 0.0), 0);
-                        if (obj4.GetComponent<EnemyfxIDcontainer>() != null)
-                        {
-                            obj4.GetComponent<EnemyfxIDcontainer>().titanName = self.Name;
-                        }
-                        obj4.transform.localScale = new Vector3(5f, 5f, 5f);
-                    }
-                    if (self._animation["attack_slap_" + self._attackAnimation].normalizedTime >= 1.0)
-                    {
-                        self.findNearestHero();
-                        self.idle();
-                        self.playAnimation("idle");
-                    }
-                }
-                elif (self._state == "steam")
-                {
-                    if (!self._attackChkOnce && (self._animation[self._actionName].normalizedTime >= self._attackCheckTime))
-                    {
-                        self._attackChkOnce = true;
-                        PhotonNetwork.Instantiate("FX/colossal_steam", self._transform.Position + ((Vector3) (self._transform.up * 185f)), Quaternion.Euler(270f, 0.0, 0.0), 0);
-                        PhotonNetwork.Instantiate("FX/colossal_steam", self._transform.Position + ((Vector3) (self._transform.up * 303f)), Quaternion.Euler(270f, 0.0, 0.0), 0);
-                        PhotonNetwork.Instantiate("FX/colossal_steam", self._transform.Position + ((Vector3) (self._transform.up * 50.0)), Quaternion.Euler(270f, 0.0, 0.0), 0);
-                    }
-                    if (self._animation[self._actionName].normalizedTime >= 1.0)
-                    {
-                        GameObject obj5 = PhotonNetwork.Instantiate("FX/colossal_steam_dmg", self._transform.Position + ((Vector3) (self._transform.up * 185f)), Quaternion.Euler(270f, 0.0, 0.0), 0);
-                        if (obj5.GetComponent<EnemyfxIDcontainer>() != null)
-                        {
-                            obj5.GetComponent<EnemyfxIDcontainer>().titanName = self.Name;
-                        }
-                        obj5 = PhotonNetwork.Instantiate("FX/colossal_steam_dmg", self._transform.Position + ((Vector3) (self._transform.up * 303f)), Quaternion.Euler(270f, 0.0, 0.0), 0);
-                        if (obj5.GetComponent<EnemyfxIDcontainer>() != null)
-                        {
-                            obj5.GetComponent<EnemyfxIDcontainer>().titanName = self.Name;
-                        }
-                        obj5 = PhotonNetwork.Instantiate("FX/colossal_steam_dmg", self._transform.Position + ((Vector3) (self._transform.up * 50.0)), Quaternion.Euler(270f, 0.0, 0.0), 0);
-                        if (obj5.GetComponent<EnemyfxIDcontainer>() != null)
-                        {
-                            obj5.GetComponent<EnemyfxIDcontainer>().titanName = self.Name;
-                        }
-                        if (self._hasDie)
-                        {
-                            if (Network.IsMasterClient)
-                            {
-                                PhotonNetwork.Destroy(self.photonView);
-                            }
-                            GameObject.Find("MultiplayerManager").GetComponent<FengGameManagerMKII>().gameWin2();
-                        }
-                        self.findNearestHero();
-                        self.idle();
-                        self.playAnimation("idle");
-                    }
-                }
-                elif (self._state == "")
-                {
-                }
-            }
-            elif (self._attackPattern == 0-1)
-            {
-                self.slap("r1");
-                self._attackPattern += 1;
-            }
-            elif (self._attackPattern == 0)
-            {
-                self.attack_sweep("");
-                self._attackPattern += 1;
-            }
-            elif (self._attackPattern == 1)
-            {
-                self.steam();
-                self._attackPattern += 1;
-            }
-            elif (self._attackPattern == 2)
-            {
-                self.kick();
-                self._attackPattern += 1;
-            }
-            elif (self._isSteamNeed == true || self._hasDie == true)
-            {
-                self.steam();
-                self._isSteamNeed = false;
-            }
-            elif (self._myHero == null)
-            {
-                self.findNearestHero();
-            }
-            else
-            {
-                Vector3 vector = self._myHero.transform.Position - self._transform.Position;
-                float current = -Math.Atan2(vector.z, vector.x) * 57.29578;
-                float f = -Math.DeltaAngle(current, self.gameObject.transform.rotation.eulerAngles.y - 90.0);
-                self.myDistance = Math.Sqrt(((self._myHero.transform.Position.x - self._transform.Position.x) * (self._myHero.transform.Position.x - self._transform.Position.x)) + ((self._myHero.transform.Position.z - self._transform.Position.z) * (self._myHero.transform.Position.z - self._transform.Position.z)));
-                float num4 = self._myHero.transform.Position.y - self._transform.Position.y;
-                if ((self.myDistance < 85f) && (Random.RandomInt(0, 100) < 5))
-                {
-                    self.steam();
-                }
-                else
-                {
-                    if ((num4 > 310f) && (num4 < 350f))
-                    {
-                        if (Vector3.Distance(self._myHero.transform.Position, self._transform.GetTransform("APL1").Position) < 40f)
-                        {
-                            self.slap("l1");
-                            return;
-                        }
-                        if (Vector3.Distance(self._myHero.transform.Position, self._transform.GetTransform("APL2").Position) < 40f)
-                        {
-                            self.slap("l2");
-                            return;
-                        }
-                        if (Vector3.Distance(self._myHero.transform.Position, self._transform.GetTransform("APR1").Position) < 40f)
-                        {
-                            self.slap("r1");
-                            return;
-                        }
-                        if (Vector3.Distance(self._myHero.transform.Position, self._transform.GetTransform("APR2").Position) < 40f)
-                        {
-                            self.slap("r2");
-                            return;
-                        }
-                        if ((self.myDistance < 150.0) && (Math.Abs(f) < 80.0))
-                        {
-                            self.attack_sweep("");
-                            return;
-                        }
-                    }
-                    if (((num4 < 300f) && (Math.Abs(f) < 80.0)) && (self.myDistance < 85f))
-                    {
-                        self.attack_sweep("_vertical");
-                    }
-                    else
-                    {
-                        switch (Random.RandomInt(0, 7))
-                        {
-                            case 0:
-                                self.slap("l1");
-                                break;
-
-                            case 1:
-                                self.slap("l2");
-                                break;
-
-                            case 2:
-                                self.slap("r1");
-                                break;
-
-                            case 3:
-                                self.slap("r2");
-                                break;
-
-                            case 4:
-                                self.attack_sweep("");
-                                break;
-
-                            case 5:
-                                self.attack_sweep("_vertical");
-                                break;
-
-                            case 6:
-                                self.steam();
-                                break;
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    function OnNetworkMessage(sender, message) 
-    {
-        #Game.Print("<color=white>(" + self.NetworkPlayer.ID + ") PLAYER RPC:</color> <color=green>" + message + "</color>");
-
-        split = String.Split(message, "|");
-
-        if (split.Count < 1)
-        {
-            return;
-        }
-
-        if (call == "changeDoorRPC")
-        {
-            self.changeDoor();
-        }
-        elif (call == "labelRPC")
-        {
-            health = Convert.ToInt(args.Get(0));
-            maxHealth = Convert.ToInt(args.Get(0));
-            self.labelRPC(health, maxHealth);
-        }
-        elif (call == "netCrossFadeRPC")
-        {
-            aniName = args.Get(0);
-            time = Convert.ToFloat(args.Get(0));
-            self.netCrossFade(aniName, time);
-        }
-        elif (call == "netDieRPC")
-        {
-            self.netDie();
-        }
-        elif (call == "netPlayAnimationRPC")
-        {
-            aniName = args.Get(0);
-            self.netPlayAnimation(aniName);
-        }
-        elif (call == "playsoundRPC")
-        {
-            sndname = args.Get(0);
-            self.playsoundRPC();
-        }
-        elif (call == "setSizeRPC")
-        {
-            size = Convert.ToInt(args.Get(0));
-            self.setSize(size);
-        }
-        elif (call == "startNeckSteamRPC")
-        {
-            self.startNeckSteam();
-        }
-        elif (call == "startSweepSmokeRPC")
-        {
-            self.startSweepSmoke();
-        }
-        elif (call == "stopSweepSmokeRPC")
-        {
-            self.stopSweepSmoke();
-        }
-        elif (call == "titanGetHitRPC")
-        {
-            viewID = Convert.ToInt(args.Get(0));
-            speed = Convert.ToInt(args.Get(1));
-            self.titanGetHit(viewID, speed);
-        }
-    }
-
     function updateLabel()
     {
         /*
@@ -943,4 +966,33 @@ extension Utils
 
         return closest;
     }
+}
+extension MathX
+{
+    function Atan2(y, x)
+    {
+        if (x > 0)
+        {
+            return Math.Deg2Rad(Math.Atan(y / x));
+        }
+        elif (x < 0 && y >= 0)
+        {
+            return Math.Deg2Rad(Math.Atan(y / x)) + Math.PI;
+        }
+        elif (x < 0 && y < 0)
+        {
+            return Math.Deg2Rad(Math.Atan(y / x)) - Math.PI;
+        }
+        elif (x == 0 && y > 0)
+        {
+            return Math.PI / 2;
+        }
+        elif (x == 0 && y < 0)
+        {
+            return 0-Math.PI / 2;
+        }
+        return 0;
+    }
+
+    function DeltaAngle(current, target)
 }
