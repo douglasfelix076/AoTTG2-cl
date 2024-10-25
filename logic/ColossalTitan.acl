@@ -1,3 +1,4 @@
+#
 class Main
 {
     function Init()
@@ -145,7 +146,7 @@ component ColossalTitan
         }
         self._CurrrentHealthTotal = self._CurrrentHealth;
         
-        self.GetNearestHero();
+        self.GetNearestHuman();
         self._state = "wait";
         self._transform.Position = Vector3.Down * 10000.0;
         self._door_broken = Map.FindMapObjectByName("door_broken");
@@ -239,7 +240,7 @@ component ColossalTitan
                     {
                         self._sweepSmokeObject.ToggleParticle(false);
                         self.NetworkView.SendMessageOthers("ToggleSweepSmokeRPC|False");
-                        self.GetNearestHero();
+                        self.GetNearestHuman();
                         self.Idle();
                         self.PlayAnimation("idle", 0.0);
                     }
@@ -258,7 +259,7 @@ component ColossalTitan
                     }
                     if (normalized >= 1.0)
                     {
-                        self.GetNearestHero();
+                        self.GetNearestHuman();
                         self.Idle();
                         self.PlayAnimation("idle", 0.0);
                     }
@@ -273,7 +274,7 @@ component ColossalTitan
                     }
                     if (normalized >= 1.0)
                     {
-                        self.GetNearestHero();
+                        self.GetNearestHuman();
                         self.Idle();
                         self.PlayAnimation("idle", 0.0);
                     }
@@ -298,7 +299,7 @@ component ColossalTitan
                                 Map.DestroyMapObject(self.MapObject, true);
                             }
                         }
-                        self.GetNearestHero();
+                        self.GetNearestHuman();
                         self.Idle();
                         self.PlayAnimation("idle", 0.0);
                     }
@@ -331,7 +332,7 @@ component ColossalTitan
             }
             elif (self._myHero == null)
             {
-                self.GetNearestHero();
+                self.GetNearestHuman();
             }
             else
             {
@@ -632,48 +633,9 @@ component ColossalTitan
     }
     */
 
-    function JustPlayAnimation(aniName, fade)
-    {
-        self._animation.HasFade = fade > 0.0;
-        self._animation.Fade = fade;
-        self._animation.ChangeAnimation(aniName);
-        self._animationStart = Time.GameTime;
-        self._animationLength = self._transform.GetAnimationLength(aniName);
-    }
-
-    function PlayAnimation(aniName, time)
-    {
-        self.JustPlayAnimation(aniName, time);
-
-        if (Network.IsMasterClient)
-        {
-            self.NetworkView.SendMessageOthers("PlayAnimationRPC|" + aniName + "/" + time);
-        }
-    }
-    
-    function GetAnimationNormalizedTime()
-    {
-        return (Time.GameTime - self._animationStart) / self._animationLength;
-    }
-
-    function GetNearestHero()
+    function GetNearestHuman()
     {
         self._myHero = Utils.GetClosest(self._transform.Position, Game.Humans);
-    }
-
-    function Idle()
-    {
-        self._state = "idle";
-        self.PlayAnimation("idle", 0.2);
-    }
-
-    function Kick()
-    {
-        self._state = "kick";
-        self._actionName = "attack_kick_wall";
-        self._attackCheckTime = 0.64;
-        self._attackChkOnce = false;
-        self.PlayAnimation(self._actionName, 0.1);
     }
     
     function KillPlayer(human)
@@ -735,6 +697,21 @@ component ColossalTitan
         */
     }
 
+    function Idle()
+    {
+        self._state = "idle";
+        self.PlayAnimation("idle", 0.2);
+    }
+
+    function Kick()
+    {
+        self._state = "kick";
+        self._actionName = "attack_kick_wall";
+        self._attackCheckTime = 0.64;
+        self._attackChkOnce = false;
+        self.PlayAnimation(self._actionName, 0.1);
+    }
+
     function Die()
     {
         self._hasDied = true;
@@ -764,11 +741,6 @@ component ColossalTitan
         self._NeckSteamObject.ToggleParticle(true);
     }
 
-    function ToggleSweepSmoke(enabled)
-    {
-        self._sweepSmokeObject.ToggleParticle(enabled);
-    }
-
     function Steam()
     {
         self.CallTitans();
@@ -777,6 +749,35 @@ component ColossalTitan
         self._attackCheckTime = 0.45;
         self.PlayAnimation(self._actionName, 0.1);
         self._attackChkOnce = false;
+    }
+
+    function ToggleSweepSmoke(enabled)
+    {
+        self._sweepSmokeObject.ToggleParticle(enabled);
+    }
+
+    function JustPlayAnimation(aniName, fade)
+    {
+        self._animation.HasFade = fade > 0.0;
+        self._animation.Fade = fade;
+        self._animation.ChangeAnimation(aniName);
+        self._animationStart = Time.GameTime;
+        self._animationLength = self._transform.GetAnimationLength(aniName);
+    }
+
+    function PlayAnimation(aniName, time)
+    {
+        self.JustPlayAnimation(aniName, time);
+
+        if (Network.IsMasterClient)
+        {
+            self.NetworkView.SendMessageOthers("PlayAnimationRPC|" + aniName + "/" + time);
+        }
+    }
+    
+    function GetAnimationNormalizedTime()
+    {
+        return (Time.GameTime - self._animationStart) / self._animationLength;
     }
 
     function GetDamaged(viewID, damage)
