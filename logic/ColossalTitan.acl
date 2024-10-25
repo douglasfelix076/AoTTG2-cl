@@ -20,9 +20,7 @@ class Main
     {
         if (Network.MyPlayer.Status != "Alive")
         {
-            Camera.SetManual(true);
             Camera.SetPosition(Map.FindMapObjectByName("cameraDefaultPosition").Position);
-            Camera.SetManual(false);
         }
     }
 
@@ -61,7 +59,8 @@ component ColossalTitan
 {
     _name = "Colossal Titan";
     _scale = 1.0;
-    _difficulty = 2;
+
+    # references
     _transform = null;
     _animation = null;
     _dummyTitan = null;
@@ -69,7 +68,11 @@ component ColossalTitan
     _sweepSmokeObject = null;
     _neck = null;
     _napeCollider = null;
+    _door_broken = null;
+    _door_closed = null;
     _myHero = null;
+    
+    _difficulty = 2;
     _state = "idle";
     _maxHealth = 0;
     _healthTime = 0.0;
@@ -92,9 +95,7 @@ component ColossalTitan
     _checkHitCapsuleEndOld = Vector3(0,0,0);
     _checkHitCapsuleR = 0.0;
     _checkHitCapsuleStart = null;
-    _door_broken = null;
-    _door_closed = null;
-    _hasDie = false;
+    _hasDied = false;
     _isSteamNeed = false;
 
     function Init()
@@ -287,7 +288,7 @@ component ColossalTitan
                     if (normalized >= 1.0)
                     {
                         self.ColossalSteam(true);
-                        if (self._hasDie)
+                        if (self._hasDied)
                         {
                             Game.End(10.0);
                             UI.SetLabel("MiddleCenter", "Humanity win!");
@@ -323,7 +324,7 @@ component ColossalTitan
                 }
                 self._startPattern += 1;
             }
-            elif (self._isSteamNeed || self._hasDie)
+            elif (self._isSteamNeed || self._hasDied)
             {
                 self.Steam();
                 self._isSteamNeed = false;
@@ -567,7 +568,7 @@ component ColossalTitan
             
             titan = Game.SpawnTitan(type);
             
-            if (special == true)
+            if (special)
             {
                 titan.UsePathfinding = true; # forces smart movement
                 titan.DetectRange = 30;
@@ -736,7 +737,7 @@ component ColossalTitan
 
     function Die()
     {
-        self._hasDie = true;
+        self._hasDied = true;
     }
 
     function Slap(type)
@@ -783,29 +784,26 @@ component ColossalTitan
         human = Game.FindCharacterByViewID(viewID);
         if (human != null)
         {
+            self._dummyTitan.GetDamaged(human.Player.Name);
+            
             if (!Game.GetTitanSetting("TitanArmorEnabled") || damage >= Game.GetTitanSetting("TitanArmor"))
             {
                 self._CurrrentHealth -= damage;
             }
             self.NeckSteam();
-            self._dummyTitan.GetDamaged(human.Player.Name);
             if (self._CurrrentHealth <= 0)
             {
                 self._CurrrentHealth = 0;
-                if (!self._hasDie)
+                if (!self._hasDied)
                 {
                     self.NetworkView.SendMessageAll("DieRPC");
-                    #GameObject.Find("MultiplayerManager").GetComponent<FengGameManagerMKII>().titanGetKill(human.Player, damage, self._name);
                 }
             }
             else
             {
-                /*
-                GameObject.Find("MultiplayerManager").GetComponent<FengGameManagerMKII>().sendKillInfo(false, (string) human.Player.customProperties[PhotonPlayerProperty.name], true, "Colossal Titan's neck", damage);
-                object[] parameters = new object[] { damage };
-                GameObject.Find("MultiplayerManager").GetComponent<FengGameManagerMKII>().photonView.RPC("netShowDamage", human.Player, damage);
-                */
+                # kill info
             }
+
             /*
             vector = human.Position - self._neck.Position;
             if (vector.Magnitude < self._lagMax && self._healthTime <= 0.0)
@@ -817,25 +815,25 @@ component ColossalTitan
         }
     }
     
-    function OnNapeHit(character, name, damage, type)
+    function OnHit(character, name, damage, type)
     {
         if (character.Type == "Human")
         {
-            self.GetDamaged(character.ViewID, damage);
+            self.NetworkView.SendMessageAll("DamageRPC|" + damage + "/" + viewID);
         }
     }
 
     coroutine Blind()
     {
-        _flashOverlay = Map.CreateMapObjectRaw("Scene,Custom/colossaltitan/overlay,1000,0,1,0,1,0,overlay,0,0,0,0,0,0,1,1,1,None,Characters,Default,DefaultNoTint|255/255/255/255,");
+        overlay = Map.CreateMapObjectRaw("Scene,Custom/colossaltitan/overlay,1000,0,1,0,1,0,overlay,0,0,0,0,0,0,1,1,1,None,Characters,Default,DefaultNoTint|255/255/255/255,");
         time = 2.0;
         while (time > 0.0)
         {
             time = Math.Max(time - Time.FrameTime, 0.0);
-            _flashOverlay.Color = Color(255,255,255,Convert.ToInt(255 * 0.5 * time));
-            _flashOverlay.Position = Camera.Position;
+            overlay.Color = Color(255,255,255,Convert.ToInt(255 * 0.5 * time));
+            overlay.Position = Camera.Position;
         }
-        Map.DestroyMapObject(_flashOverlay, true);
+        Map.DestroyMapObject(overlay, true);
     }
 }
 
@@ -879,7 +877,7 @@ component RockScript
     }
 }
 
-component BoomRegion
+component ExplodeRegion
 {
     isDamage = false;
     radius = 0.0;
@@ -974,11 +972,7 @@ component EndRegion
 
     function OnCollisionEnter(other)
     {
-        if (Game.IsEnding)
-        {
-            return;
-        }
-        if (other.IsCharacter && other.IsMine)
+        if (other.IsCharacter && other.IsMine && !Game.IsEnding)
         {
             if (other.Type == "Human" && !self.Humans)
             {
@@ -1006,8 +1000,8 @@ extension Utils
 {
     coroutine CreateDamageRegionAt(position, name, killRadius, pushRadius)
     {
-        obj1 = Map.CreateMapObjectRaw("Scene,None,645,0,1,1,1,0," + name + "," + position.X + "," + position.Y + "," + position.Z + ",0,0,0,1,1,1,Region,Characters,Default,DefaultNoTint|255/255/255/255,BoomRegion|isDamage:true|radius:" + killRadius);
-        obj2 = Map.CreateMapObjectRaw("Scene,None,686,0,1,1,1,0," + name + "," + position.X + "," + position.Y + "," + position.Z + ",0,0,0,1,1,1,Region,Characters,Default,DefaultNoTint|255/255/255/255,BoomRegion|isDamage:false|radius:" + pushRadius);
+        obj1 = Map.CreateMapObjectRaw("Scene,None,645,0,1,1,1,0," + name + "," + position.X + "," + position.Y + "," + position.Z + ",0,0,0,1,1,1,Region,Characters,Default,DefaultNoTint|255/255/255/255,ExplodeRegion|isDamage:true|radius:" + killRadius);
+        obj2 = Map.CreateMapObjectRaw("Scene,None,686,0,1,1,1,0," + name + "," + position.X + "," + position.Y + "," + position.Z + ",0,0,0,1,1,1,Region,Characters,Default,DefaultNoTint|255/255/255/255,ExplodeRegion|isDamage:false|radius:" + pushRadius);
         
         obj1.AddSphereCollider("Region", "Characters", Vector3.Zero, killRadius);
         obj2.AddSphereCollider("Region", "Characters", Vector3.Zero, pushRadius);
