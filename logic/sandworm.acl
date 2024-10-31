@@ -10,7 +10,6 @@
             self.worm = Map.FindMapObjectByName("sandworm").GetComponent("Worm");
             self.WalkingSpeed = Math.Clamp(self.WalkingSpeed, -1, 1000);
             Game.SetPlaylist("Battle");
-            #self.SetSong();
             #Time.TimeScale = 0.1;
         }
         
@@ -329,7 +328,7 @@
                 lastPos = self.MapObject.Position - self.MapObject.Forward * 40;
                 self.MapObject.Position = targetPos;
                 self.MapObject.Forward = targetPos - lastPos;
-                self.MapObject.Rotation = QuaternionX.LookRotation(self.MapObject.Forward, Vector3.Slerp(self.MapObject.Up, self._parentSegment.Up, Time.TickTime * 20)).Euler;
+                self.MapObject.Rotation = Quaternion.LookRotation(self.MapObject.Forward, Vector3.Slerp(self.MapObject.Up, self._parentSegment.Up, Time.TickTime * 20)).Euler;
             }
             
             for(human in self._grabHumans.Keys)
@@ -337,7 +336,7 @@
                 pos = self._grabHumans.Get(human);
 
                 human.Position = self.MapObject.Transform.TransformPoint(pos);
-                human.Rotation = QuaternionX.LookRotation(self.MapObject.Forward,  self.MapObject.Up).Euler;
+                human.Rotation = Quaternion.LookRotation(self.MapObject.Forward,  self.MapObject.Up).Euler;
                 human.AddForce(human.Velocity * (0-1));
             }
         }
@@ -1251,159 +1250,8 @@
         }
     }
 
-    extension VectorX
-    {
-        function EulerToDirection(euler)
-        {
-            pitch = 0-euler.X;
-            yaw = 0-euler.Y; 
-            
-            return Vector3(Math.Cos(yaw) * Math.Cos(pitch), Math.Sin(pitch), Math.Sin(yaw) * Math.Cos(pitch));
-        }
-
-        function DirectionToEuler(direction)
-        {
-            yaw = MathX.Atan2(direction.Z, direction.X) * Math.Rad2DegConstant;
-            pitch = MathX.Atan2(direction.Y, Math.Sqrt(direction.X * direction.X + direction.Z * direction.Z)) * Math.Rad2DegConstant;
-            return Vector3(pitch, yaw, 0);
-        }
-    }
-
-    extension QuaternionX
-    {
-        function Inverse(q)
-        {
-            normSquared = q.W * q.W + q.X * q.X + q.Y * q.Y + q.Z * q.Z;
-            
-            if (normSquared > 0)
-            {
-                return Quaternion(q.W / normSquared, 0-q.X / normSquared, 0-q.Y / normSquared, 0-q.Z / normSquared);
-            }
-            return Quaternion(0, 0, 0, 0);
-        }
-
-        function LookRotationY(forward, up)
-        {
-            ztoup = self.LookRotation(up, forward * 0-1);
-            ytoz = Quaternion.FromEuler(Vector3(90, 0, 0));
-            return ztoup * ytoz;
-        }
-
-        function LookRotation(forward, up)
-        {
-            forward = forward.Normalized;
-            up = up - (forward * Vector3.Dot(up, forward));
-            up = up.Normalized;
-
-            vector = forward.Normalized;
-            vector2 = Vector3.Cross(up, vector);
-            vector3 = Vector3.Cross(vector, vector2);
-            m00 = vector2.X;
-            m01 = vector2.Y;
-            m02 = vector2.Z;
-            m10 = vector3.X;
-            m11 = vector3.Y;
-            m12 = vector3.Z;
-            m20 = vector.X;
-            m21 = vector.Y;
-            m22 = vector.Z;
-
-            num8 = (m00 + m11) + m22;
-            quaternion = Quaternion.Identity;
-            if (num8 > 0.0)
-            {
-                num = Math.Sqrt(num8 + 1.0);
-                quaternion.W = num * 0.5;
-                num = 0.5 / num;
-                quaternion.X = (m12 - m21) * num;
-                quaternion.Y = (m20 - m02) * num;
-                quaternion.Z = (m01 - m10) * num;
-                return quaternion;
-            }
-            if ((m00 >= m11) && (m00 >= m22))
-            {
-                num7 = Math.Sqrt(((1.0 + m00) - m11) - m22);
-                num4 = 0.5 / num7;
-                quaternion.X = 0.5 * num7;
-                quaternion.Y = (m01 + m10) * num4;
-                quaternion.Z = (m02 + m20) * num4;
-                quaternion.W = (m12 - m21) * num4;
-                return quaternion;
-            }
-            if (m11 > m22)
-            {
-                num6 = Math.Sqrt(((1.0 + m11) - m00) - m22);
-                num3 = 0.5 / num6;
-                quaternion.X = (m10 + m01) * num3;
-                quaternion.Y = 0.5 * num6;
-                quaternion.Z = (m21 + m12) * num3;
-                quaternion.W = (m20 - m02) * num3;
-                return quaternion;
-            }
-            num5 = Math.Sqrt(((1.0 + m22) - m00) - m11);
-            num2 = 0.5 / num5;
-            quaternion.X = (m20 + m02) * num2;
-            quaternion.Y = (m21 + m12) * num2;
-            quaternion.Z = 0.5 * num5;
-            quaternion.W = (m01 - m10) * num2;
-
-            return quaternion;
-        }
-
-        function FromToRotation(from, to)
-        {
-            from = from.Normalized;
-            to = to.Normalized;
-
-            dot = Vector3.Dot(from, to);
-
-            if (dot > 0.9999)
-            {
-                return Quaternion.Identity;
-            }
-
-            if (dot < -0.9999)
-            {
-                axis = Vector3.Cross(Vector3.Right, from);
-                if (axis.Magnitude < 0.0001)
-                {
-                    axis = Vector3.Cross(Vector3.Up, from);
-                }
-                axis = axis.Normalized;
-                return self.AngleAxis(axis, 180);
-            }
-
-            axisOfRotation = Vector3.Cross(from, to);
-            angle = Math.Acos(dot);
-            return self.AngleAxis(axisOfRotation, angle * Math.Rad2DegConstant);
-        }
-
-        function AngleAxis(axis, angleDegrees)
-        {
-            angleRadians = angleDegrees * Math.Deg2RadConstant;
-
-            halfAngle = angleRadians * 0.5;
-            sinHalfAngle = Math.Sin(halfAngle);
-            cosHalfAngle = Math.Cos(halfAngle);
-
-            return Quaternion(axis.X * sinHalfAngle, axis.Y * sinHalfAngle, axis.Z * sinHalfAngle, cosHalfAngle);
-        }
-    }
-
     extension ListX
     {
-        function Contains(list, obj)
-        {
-            for (element in list)
-            {
-                if (element == obj)
-                {
-                    return true;
-                }
-            }
-            return false;
-        }
-
         function Random(list)
         {
             if (list.Count == 0)
