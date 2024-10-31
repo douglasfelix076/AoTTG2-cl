@@ -987,6 +987,60 @@ component PushRegion
         }
     }
 }
+component CollisionTrigger
+{
+    Description = "Sends a trigger when detecting collisions. The handler needs to be defined using custom logic.";
+
+    OnCollision = true;
+    OnHit = true;
+    OnHooked = true;
+    _handler = null;
+
+    function SetHandler(handler)
+    {
+        self._handler = handler;
+    }
+    
+    function OnCollisionEnter(other)
+    {
+        if (self._handler != null && self.OnCollision)
+        {
+            self._handler.HandleCollision(self, "enter", other);
+        }
+    }
+
+    function OnCollisionStay(other)
+    {
+        if (self._handler != null && self.OnCollision)
+        {
+            self._handler.HandleCollision(self, "stay", other);
+        }
+    }
+
+    function OnCollisionExit(other)
+    {
+        if (self._handler != null && self.OnCollision)
+        {
+            self._handler.HandleCollision(self, "exit", other);
+        }
+    }
+
+    function OnGetHit(character, name, damage, type)
+    {
+        if (self._handler != null && self.OnHit)
+        {
+            self._handler.HandleHit(self, character, name, damage, type);
+        }
+    }
+
+    function OnGetHooked(human, hookPos, leftHook)
+    {
+        if (self._handler != null && self.OnHooked)
+        {
+            self._handler.HandleHook(self, human, hookPos, leftHook);
+        }
+    }
+}
 
 component DestroySelf
 {
