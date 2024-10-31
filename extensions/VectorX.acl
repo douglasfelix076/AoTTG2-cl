@@ -14,14 +14,6 @@ extension VectorX
 
         return vector;
     }
-    
-    function EulerToDirection(euler)
-    {
-        pitch = 0-euler.X;
-        yaw = 0-euler.Y; 
-        
-        return Vector3(Math.Cos(yaw) * Math.Cos(pitch), Math.Sin(pitch), Math.Sin(yaw) * Math.Cos(pitch));
-    }
 
     function DirectionToEuler(direction)
     {

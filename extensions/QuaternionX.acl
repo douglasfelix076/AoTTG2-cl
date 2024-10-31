@@ -1,81 +1,9 @@
 extension QuaternionX
 {
-    function Inverse(q)
-    {
-        normSquared = q.W * q.W + q.X * q.X + q.Y * q.Y + q.Z * q.Z;
-        
-        if (normSquared > 0)
-        {
-            return Quaternion(q.W / normSquared, 0-q.X / normSquared, 0-q.Y / normSquared, 0-q.Z / normSquared);
-        }
-        return Quaternion(0, 0, 0, 0);
-    }
-
     function LookRotationY(forward, up)
     {
-        ztoup = self.LookRotation(up, forward * 0-1);
+        ztoup = Quaternion.LookRotation(up, forward * 0-1);
         ytoz = Quaternion.FromEuler(Vector3(90, 0, 0));
         return ztoup * ytoz;
-    }
-
-    function LookRotation(forward, up)
-    {
-        forward = forward.Normalized;
-        up = up - (forward * Vector3.Dot(up, forward));
-        up = up.Normalized;
-
-        vector = forward.Normalized;
-        vector2 = Vector3.Cross(up, vector);
-        vector3 = Vector3.Cross(vector, vector2);
-        m00 = vector2.X;
-        m01 = vector2.Y;
-        m02 = vector2.Z;
-        m10 = vector3.X;
-        m11 = vector3.Y;
-        m12 = vector3.Z;
-        m20 = vector.X;
-        m21 = vector.Y;
-        m22 = vector.Z;
-
-        num8 = (m00 + m11) + m22;
-        quaternion = Quaternion.Identity;
-        if (num8 > 0.0)
-        {
-            num = Math.Sqrt(num8 + 1.0);
-            quaternion.W = num * 0.5;
-            num = 0.5 / num;
-            quaternion.X = (m12 - m21) * num;
-            quaternion.Y = (m20 - m02) * num;
-            quaternion.Z = (m01 - m10) * num;
-            return quaternion;
-        }
-        if ((m00 >= m11) && (m00 >= m22))
-        {
-            num7 = Math.Sqrt(((1.0 + m00) - m11) - m22);
-            num4 = 0.5 / num7;
-            quaternion.X = 0.5 * num7;
-            quaternion.Y = (m01 + m10) * num4;
-            quaternion.Z = (m02 + m20) * num4;
-            quaternion.W = (m12 - m21) * num4;
-            return quaternion;
-        }
-        if (m11 > m22)
-        {
-            num6 = Math.Sqrt(((1.0 + m11) - m00) - m22);
-            num3 = 0.5 / num6;
-            quaternion.X = (m10 + m01) * num3;
-            quaternion.Y = 0.5 * num6;
-            quaternion.Z = (m21 + m12) * num3;
-            quaternion.W = (m20 - m02) * num3;
-            return quaternion;
-        }
-        num5 = Math.Sqrt(((1.0 + m22) - m00) - m11);
-        num2 = 0.5 / num5;
-        quaternion.X = (m20 + m02) * num2;
-        quaternion.Y = (m21 + m12) * num2;
-        quaternion.Z = 0.5 * num5;
-        quaternion.W = (m01 - m10) * num2;
-
-        return quaternion;
     }
 }

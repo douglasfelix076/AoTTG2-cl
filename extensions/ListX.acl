@@ -12,18 +12,6 @@ extension ListX
         return -1;
     }
 
-    function Contains(list, obj)
-    {
-        for (element in list)
-        {
-            if (element == obj)
-            {
-                return true;
-            }
-        }
-        return false;
-    }
-
     function Random(list)
     {
         if (list.Count == 0)

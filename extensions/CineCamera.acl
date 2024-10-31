@@ -1,6 +1,6 @@
 extension CineCamera
 {
-    coroutine EnemyAppearance(target, startDuration, duration, endDuration, outline)
+    coroutine HighlightEnemy(target, startDuration, duration, endDuration, outline)
     {
         if (outline == true)
         {
