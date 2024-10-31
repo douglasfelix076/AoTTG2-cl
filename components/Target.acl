@@ -1,0 +1,27 @@
+component Target
+{
+    Distance = 1.0;
+    Speed = 1.0;
+    FollowMouse = false;
+    _startPosition = Vector3.Zero;
+
+    function Init()
+    {
+        self._startPosition = self.MapObject.Position;
+    }
+
+    function OnTick()
+    {
+        if (self.FollowMouse)
+        {
+            pos = Input.GetMouseAim();
+            pos.Y = 3;
+            self.MapObject.Position = pos;
+        }
+        else
+        {
+            angle = Time.GameTime * 360 * self.Speed;
+            self.MapObject.Position = self._startPosition + Vector3(Math.Sin(angle), 0, Math.Cos(angle)) * self.Distance;
+        }
+    }
+}

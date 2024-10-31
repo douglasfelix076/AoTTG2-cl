@@ -1,0 +1,14 @@
+component ScrollingTexture
+{
+    SpeedX = 0.0;
+    SpeedY = 0.0;
+
+    function OnTick()
+    {
+        if (self.MapObject.HasRenderer)
+        {
+            self.MapObject.TextureOffsetX = self.MapObject.TextureOffsetX + self.SpeedX * Time.TickTime;
+            self.MapObject.TextureOffsetY = self.MapObject.TextureOffsetY + self.SpeedY * Time.TickTime;
+        }
+    }
+}
