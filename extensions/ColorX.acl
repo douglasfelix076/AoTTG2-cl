@@ -1,0 +1,7 @@
+extension ColorX 
+{
+    function Lerp(a, b, t)
+    {
+        return Color(Math.Round(Math.Lerp(a.R, b.R, t)), Math.Round(Math.Lerp(a.G, b.G, t)), Math.Round(Math.Lerp(a.B, b.B, t)), Math.Round(Math.Lerp(a.A, b.A, t)));
+    }
+}

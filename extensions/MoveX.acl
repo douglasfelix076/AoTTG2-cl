@@ -1,30 +1,73 @@
+
 extension MoveX 
 {
     coroutine MoveTo(mapobject, start, end, time, easing)
     {
-        start = mapobject.Position;
-        t = 0.0;
-        while (t < time)
+        startTime = Time.GameTime;
+        while ((Time.GameTime - startTime) <= time)
         {
-            pos = Vector3.Lerp(start, end, Interpolation.Evaluate(t/time, easing));
+            pos = Vector3.Lerp(start, end, Interpolation.Evaluate((Time.GameTime - startTime) / time, easing));
             mapobject.Position = pos;
-            t += Time.FrameTime;
-            wait 0.0;
         }
         mapobject.Position = end;
     }
 
-    coroutine RotateTo(mapobject, targetrot, time, easing)
+    coroutine RotateTo(mapobject, startRotation, targetRot, time, easing)
     {
-        startRotation = mapobject.Rotation;
+        startQuat = Quaternion.FromEuler(startRotation);
+        targetQuat = Quaternion.FromEuler(targetRot);
+
         t = 0.0;
         while (t < time)
         {
-            newRotation = Quaternion.Slerp(Quaternion.FromEuler(startRotation), Quaternion.FromEuler(targetrot), Interpolation.Evaluate(t/time, easing)).Euler;
-            mapobject.Rotation = newRotation;
+            mapobject.Rotation = Quaternion.Slerp(startQuat, targetQuat, Interpolation.Evaluate(t/time, easing)).Euler;
+            
+            t += Time.FrameTime;
+        }
+        mapobject.Rotation = targetRot;
+    }
+
+    coroutine ScaleTo(mapobject, startScale, endScale, time, easing)
+    {
+        startTime = Time.GameTime;
+        while (Time.GameTime - startTime <= time)
+        {
+            scale = Vector3.Lerp(startScale, endScale, Interpolation.Evaluate((Time.GameTime - startTime) / time, easing));
+            mapobject.Scale = scale;
+        }
+        mapobject.Scale = endScale;
+    }
+
+    coroutine MoveToParent(mapobject, parent, start, end, time, easing)
+    {
+        t = 0.0;
+        while (t < time)
+        {
+            pos = Vector3.Lerp(start, parent.Transform.TransformPoint(end), Interpolation.Evaluate(t/time, easing));
+            mapobject.Position = pos;
             t += Time.FrameTime;
             wait 0.0;
         }
-        mapobject.Rotation = targetrot;
+        
+        mapobject.Parent = parent;
+        mapobject.LocalPosition = end;
+    }
+
+    coroutine RotateToParent(mapobject, parent, startRotation, targetRot, time, easing)
+    {
+        startQuat = Quaternion.FromEuler(startRotation);
+        targetQuat = Quaternion.FromEuler(targetRot);
+
+        t = 0.0;
+        while (t < time)
+        {
+            mapobject.Rotation = Quaternion.Slerp(startQuat, Quaternion.FromEuler(parent.Transform.Rotation) * targetQuat, Interpolation.Evaluate(t / time, easing)).Euler;
+
+            t += Time.FrameTime;
+            wait 0.0;
+        }
+
+        mapobject.Parent = parent;
+        mapobject.LocalRotation = targetRot;
     }
 }
