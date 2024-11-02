@@ -1,0 +1,105 @@
+component Container
+{
+    Humans = true;
+    Titans = false;
+    Shifters = false;
+    Team = "None";
+
+    RotationsEnabled = true;
+    RotateForward = true;
+    RotateCamera = true;
+    BlendVelocity = true;
+
+    RotationsEnabledTooltip = "Will rotate the character position along with the object";
+    RotateForwardTooltip = "Will rotate the direction of the character";
+    RotateCameraTooltip = "Will rotate the direction of the view";
+    BlendVelocityTooltip = "Will try to blend the velocity when a character enters or leaves collision. Might cause weirdness with overlapping containers";
+
+    _characters = List();
+    _lastPos = Vector3(0, 0, 0);
+    _lastRot = Quaternion(0, 0, 0, 0);
+    _fromToPosition = Vector3(0, 0, 0);
+    _fromToRotation = Quaternion(0, 0, 0, 0);
+
+    function Init()
+    {
+        self._lastPos = self.MapObject.Position;
+        self._lastRot = self.MapObject.QuaternionRotation;
+    }
+
+    function OnCollisionEnter(other)
+    {
+        if (other.IsCharacter)
+        {
+            if (other.Type == "Human" && !self.Humans)
+            {
+                return;
+            }
+            if (other.Type == "Titan" && !self.Titans)
+            {
+                return;
+            }
+            if (other.Type == "Shifter" && !self.Shifters)
+            {
+                return;
+            }
+            if (other.Team != self.Team && self.Team != "None")
+            {
+                return;
+            }
+
+            self._characters.Add(other);
+            CCManager.Add(other, self);
+
+            if (self.BlendVelocity)
+            {
+                count = CCManager.GetColliderCount(other);
+                other.AddForce(self._fromToPosition / (0-Time.TickTime), "VelocityChange");
+            }
+        }
+    }
+
+    function OnCollisionExit(other)
+    {
+        if (other.IsCharacter && self._characters.Contains(other))
+        {
+            if (self.BlendVelocity)
+            {
+                other.AddForce(self._fromToPosition / Time.TickTime, "VelocityChange");
+            }
+            
+            self._characters.Remove(other);
+            CCManager.Remove(other, self);
+        }
+    }
+
+
+    function OnTick()
+    {
+        self._fromToPosition = self.MapObject.Position - self._lastPos;
+        self._fromToRotation = self.MapObject.QuaternionRotation * Quaternion.Inverse(self._lastRot);
+
+        for (character in self._characters)
+        {
+            character.Position = character.Position + self._fromToPosition;
+            if (self.RotationsEnabled)
+            {
+                rotatedPos = VectorX.RotateAroundPoint(character.Position, self.MapObject.Position, self._fromToRotation);
+                character.Position = character.Position + (rotatedPos - character.Position);
+
+                if (self.RotateForward)
+                {
+                    #Game.Print(VectorX.RotateByQuaternion(character.Forward, self._fromToRotation));
+                    #character.LookAt(self.MapObject.Forward);
+                }
+                if (self.RotateCamera && character.IsMine && character.IsMainCharacter)
+                {
+                    Camera.LookAt(Camera.Position + VectorX.RotateByQuaternion(Camera.Forward, self._fromToRotation));
+                }
+            }
+        }
+
+        self._lastPos = self.MapObject.Position;
+        self._lastRot = self.MapObject.QuaternionRotation;
+    }
+}

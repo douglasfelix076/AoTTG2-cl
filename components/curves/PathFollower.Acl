@@ -1,0 +1,53 @@
+component PathFollower
+{
+    SplineID = 0;
+    Active = true;
+    Loop = true;
+    Turn = true;
+    PathPosition = 0.0;
+    Speed = 1.0;
+    RotationOffset = Vector3(0,0,0);
+
+    _spline = null;
+
+    function Init()
+    {
+        obj = Map.FindMapObjectByID(self.SplineID);
+        if (obj != null)
+        {
+            spl = obj.GetComponent("Spline");
+            if (spl != null)
+            {
+                self._spline = spl;
+            }
+        }
+    }
+
+    function OnTick()
+    {
+        if (self._spline != null && self.Active)
+        {
+            oldPos = self.MapObject.Position;
+            
+            if (self.Loop)
+            {
+                self.PathPosition += self.Speed * Time.TickTime;
+                if (self.PathPosition >= self._spline.TotalLength)
+                {
+                    self.PathPosition -= self._spline.TotalLength;
+                }
+                if (self.PathPosition < 0)
+                {
+                    self.PathPosition += self._spline.TotalLength;
+                }
+            }
+
+            self.MapObject.Position = self._spline.Evaluate(self.PathPosition);
+            if (self.Turn)
+            {
+                self.MapObject.Forward = self.MapObject.Position - oldPos;
+                self.MapObject.QuaternionRotation = self.MapObject.QuaternionRotation = Quaternion.FromEuler(self.RotationOffset);
+            }
+        }
+    }
+}

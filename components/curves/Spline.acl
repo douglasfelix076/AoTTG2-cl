@@ -1,0 +1,139 @@
+component Spline
+{
+    NamePrefix = "Spline";
+    Resolution = 3;
+    Visible = false;
+    Closed = false;
+
+    TotalLength = 0.0;
+
+    _lineRenderer = null;
+
+    _points = List();
+    _segments = List();
+    _tangents = List();
+
+    function Init()
+    {
+        self.Resolution = Math.Clamp(self.Resolution, 1, 5);
+        next = true;
+        currentID = 0;
+        while (next)
+        {
+            point = Map.FindMapObjectByName(self.NamePrefix + "_" + currentID);
+            if (point != null)
+            {
+                self._points.Add(point.Position);
+                currentID += 1;
+            }
+            else
+            {
+                next = false;
+            }
+        }
+
+        self.CalculateTangents();
+
+        for (i in Range(0, self._points.Count - 1, 1))
+        {
+            segment = Curve3D(self._points.Get(i), self._tangents.Get(i), self._points.Get(i + 1), Vector3.Zero - self._tangents.Get(i + 1), self.Resolution);
+            self.TotalLength += segment.TotalLength;
+            self._segments.Add(segment);
+        }
+        
+        if (self.Closed)
+        {
+            segment = Curve3D(self._points.Get(self._points.Count - 1), self._tangents.Get(self._points.Count - 1), self._points.Get(0), Vector3.Zero - self._tangents.Get(0), self.Resolution);
+            self.TotalLength += segment.TotalLength;
+            self._segments.Add(segment);
+        }
+        
+        if (self.Visible)
+        {
+            self.CreateLR();
+        }
+    }
+
+    function CalculateTangents()
+    {
+        for (i in Range(0, self._points.Count, 1))
+        {
+            currPoint = self._points.Get(i);
+            tangent = Vector3(0,0,0);
+            if (self.Closed)
+            {
+                prevPoint = self._points.Get(Math.Mod(i - 1 + self._points.Count, self._points.Count));
+                nextPoint = self._points.Get(Math.Mod(i + 1, self._points.Count));
+            }
+            else
+            {
+                if (i == 0)
+                {
+                    prevPoint = currPoint;
+                    nextPoint = self._points.Get(i + 1);
+                }
+                elif (i == self._points.Count - 1)
+                {
+                    prevPoint = self._points.Get(i - 1);
+                    nextPoint = currPoint;
+                }
+                else
+                {
+                    prevPoint = self._points.Get(i - 1);
+                    nextPoint = self._points.Get(i + 1);
+                }
+            }
+
+            distancePrev = (currPoint - prevPoint).Magnitude;
+            distanceNext = (nextPoint - currPoint).Magnitude;
+            tangent = ((nextPoint - prevPoint) * 0.5).Normalized * Math.Min(distancePrev, distanceNext) * 0.5;
+
+            self._tangents.Add(tangent);
+        }
+    }
+
+    function Evaluate(t)
+    {
+        distance = t;
+        accumulatedLength = 0.0;
+
+        for (i in Range(0, self._segments.Count, 1))
+        {
+            segment = self._segments.Get(i);
+            if (accumulatedLength + segment.TotalLength >= distance)
+            {
+                localT = distance - accumulatedLength;
+                return segment.Evaluate(localT);
+            }
+            accumulatedLength += segment.TotalLength;
+        }
+        
+        return self._points.Get(self._points.Count-1);
+    }
+
+    function EvaluateNormalized(t)
+    {
+        return self.Evaluate(t * self.TotalLength);
+    }
+    
+    function CreateLR()
+    {
+        if (self._lineRenderer == null)
+        {
+            self._lineRenderer = LineRenderer.CreateLineRenderer();
+            self._lineRenderer.LineColor = Color(0,255,255,255);
+            self._lineRenderer.PositionCount = 0;
+        }
+
+        c = self._points.Count * 15;
+        self._lineRenderer.PositionCount = c;
+
+        for (i in Range(0, c, 1))
+        {
+            t = i / (c - 1.0);
+            self._lineRenderer.SetPosition(i, self.EvaluateNormalized(t));
+        }
+
+        self._lineRenderer.Enabled = true;
+    }
+}

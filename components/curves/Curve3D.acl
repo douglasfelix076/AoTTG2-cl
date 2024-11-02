@@ -1,0 +1,90 @@
+class Curve3D
+{
+    P1 = Vector3.Zero;
+    P2 = Vector3.Zero;
+    T1 = Vector3.Zero;
+    T2 = Vector3.Zero;
+    _lengths = List();
+    TotalLength = 0.0;
+    Resolution = 0;
+
+    function Init(P1, T1, P2, T2, Resolution)
+    {
+        self.P1 = P1;
+        self.P2 = P2;
+        self.T1 = P1+T1;
+        self.T2 = P2+T2;
+        self.Resolution = Resolution;
+
+        self.CalculateLengths();
+    }
+
+    # 0.0 - TotalLength
+    function Evaluate(t)
+    {
+        remappedT = self.Remap(t);
+        return self.EvaluateRaw(remappedT);
+    }
+
+    # 0.0 - 1.0
+    function EvaluateNormalized(t)
+    {
+        remappedT = self.Remap(t * self.TotalLength);
+        return self.EvaluateRaw(remappedT);
+    }
+
+    # 0.0 - 1.0
+    function EvaluateRaw(t)
+    {
+        t = Math.Clamp(t, 0.0, 1.0);
+        a1 = Vector3.Lerp(self.P1, self.T1, t);
+        a2 = Vector3.Lerp(self.T1, self.T2, t);
+        a3 = Vector3.Lerp(self.T2, self.P2, t);
+        b1 = Vector3.Lerp(a1, a2, t);
+        b2 = Vector3.Lerp(a2, a3, t);
+        d = Vector3.Lerp(b1, b2, t);
+        return d;
+    }
+
+    function Remap(distance)
+    {
+        distance = Math.Max(0, Math.Min(distance, self.TotalLength));
+
+        for (i in Range(1, self._lengths.Count, 1))
+        {
+            prevLength = self._lengths.Get(i - 1);
+            currLength = self._lengths.Get(i);
+
+            if (distance <= currLength)
+            {
+                prevT = (i - 1) / (self._lengths.Count - 1.0);
+                nextT = i / (self._lengths.Count - 1.0);       
+
+                lerpFactor = (distance - prevLength) / (currLength - prevLength);
+
+                return prevT + lerpFactor * (nextT - prevT);
+            }
+        }
+
+        return 1.0;
+    }
+
+    function CalculateLengths()
+    {
+        sampleCount = Math.Max(self.Resolution * 10, 2);
+        current = self.EvaluateRaw(0.0);
+        self.TotalLength = 0.0;
+        self._lengths.Clear();
+        self._lengths.Add(0.0); 
+
+        for (i in Range(1, sampleCount, 1))
+        {
+            t = i / (sampleCount - 1.0); 
+            nextPoint = self.EvaluateRaw(t);
+            diff = (nextPoint - current).Magnitude;
+            self.TotalLength += diff;
+            self._lengths.Add(self.TotalLength);
+            current = nextPoint;
+        }
+    }
+}
