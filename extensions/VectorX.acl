@@ -17,8 +17,26 @@ extension VectorX
 
     function DirectionToEuler(direction)
     {
-        yaw = MathX.Atan2(direction.Z, direction.X) * Math.Rad2DegConstant;
-        pitch = MathX.Atan2(direction.Y, Math.Sqrt(direction.X * direction.X + direction.Z * direction.Z)) * Math.Rad2DegConstant;
+        yaw = Math.Atan2(direction.Z, direction.X) * Math.Rad2DegConstant;
+        pitch = Math.Atan2(direction.Y, Math.Sqrt(direction.X * direction.X + direction.Z * direction.Z)) * Math.Rad2DegConstant;
         return Vector3(pitch, yaw, 0);
+    }
+    
+    function Rotate(v, q)
+    {
+        qVec = Vector3(q.X, q.Y, q.Z);
+        cross1 = Vector3.Cross(qVec, v);
+        cross2 = Vector3.Cross(qVec, cross1);
+
+        rotatedVector = v + 2 * q.W * cross1 + 2 * cross2;
+        return rotatedVector;
+    }
+
+    function RotateAroundPoint(P1, P2, q)
+    {
+        v = P1 - P2;
+        v = self.Rotate(v, q);
+        v = P2 + v;
+        return v;
     }
 }
