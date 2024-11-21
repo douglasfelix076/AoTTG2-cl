@@ -1,0 +1,466 @@
+/// Options
+EditorVersion:1.0|Description:|HasWeather:1
+/// CustomAssets
+
+/// Objects
+Scene,General/EditorDaylight,0,0,1,1,0,0,Daylight,0,20,0,53.13011,126.8699,0,1,1,1,None,Entities,Default,DefaultNoTint|255/255/255/255,Daylight|Color:255/255/255/255|Intensity:1|WeatherControlled:true;
+Scene,Terrain/Mountain1,1,0,1,1,1,0,Mountain1,-239.8778,-1476,2872,0,270,0,20,5,20,Physical,All,Default,Basic|255/255/255/255|Misc/Snow1|25/25|0/0,CustomPhysicsMaterial|IncludeChildren:true|StaticFriction:0.6|DynamicFriction:0.1|Bounciness:0|FrictionCombine:Minimum|BounceCombine:Average;
+Scene,None,2,0,0,0,1,0,Snowboard,-915,1064,1510.5,0,0,0,1,1,1,Physical,All,Default,Default|255/255/255/255,SnowboardMount|JumpForce:7|TurnSpeed:100|TurnAttenuation:15|AirTurnSpeed:4|TurnDeccel:15,Rigidbody|Mass:1|Gravity:0/-15/0|FreezeRotation:true|Interpolate:false|Kinematic:false|CollisionDetection:ContinuousSpeculative;
+Scene,Geometry/Sphere1,3,2,1,0,0,0,collision,-915,1064.5,1510.5,0,0,0,1,1,1,Physical,MapObjects,Default,Default|255/255/255/255,;
+Scene,None,4,6,1,0,1,0,board_mount,-914.7982,1064.151,1510.5,42.48452,252.296,334.7026,1,1,1,None,Entities,Default,Default|255/255/255/255,;
+Scene,Geometry/Capsule1,5,6,1,0,1,0,board,-915,1064,1510.5,90,0,0,0.5,0.7,0.1,None,MapObjects,Default,Basic|255/255/255/255|Misc/Dev1|2/2|0/0,;
+Scene,None,6,2,1,0,1,0,origin,-915,1064.75,1510.5,0,0,0,1,1,1,None,Entities,Default,Default|255/255/255/255,;
+Scene,Nature/Boulder9,7,1,1,1,1,0,Boulder9,-1162.963,640.8575,1555.855,0,270,0,500,500,500,Physical,Entities,IceMaterial,Basic|255/255/255/255|Misc/Snow1|10/10|0/0,;
+Scene,Decor/Scaffold4,8,0,1,1,1,0,Scaffold4,-982.7176,916,1497.688,0,270,0,10,10,20,Physical,Entities,Default,Default|255/255/255/255,;
+Scene,Buildings/House10,9,0,1,1,1,0,House10,-986.0728,1085.468,1479.598,0,270,0,1,1,1,Physical,Entities,Default,Default|255/255/255/255,;
+Scene,General/EditorHumanSpawnPoint,10,0,1,1,0,0,Human SpawnPoint,-840.5588,1059,1463.942,0,-2.177123E-05,0,1,1,1,None,Entities,Default,Default|255/255/255/255,Tag|Name:HumanSpawnPoint;
+Scene,Nature/Boulder9,11,0,1,1,1,0,Boulder9,806.5328,-50,3232.248,49.23598,176.6667,329.5082,500,1500,500,Physical,Entities,IceMaterial,Basic|255/255/255/255|Stone/Stone17|10/10|0/0,;
+Scene,Nature/Boulder9,12,1,1,1,1,0,Boulder9,-57.83121,544,2279.806,0,353.9,0,500,500,500,Physical,Entities,IceMaterial,Basic|255/255/255/255|Misc/Snow1|10/10|0/0,;
+Scene,Nature/Boulder9,13,0,1,1,1,0,Boulder9,-256.1715,-660,5299.444,329.064,182.5524,303.3161,500,500,500,Physical,Entities,IceMaterial,Basic|255/255/255/255|Stone/Stone17|10/10|0/0,;
+Scene,Nature/Boulder9,14,0,1,1,1,0,Boulder9,-1248.268,223.7307,3812.166,20.90212,340.1661,142.6441,1000,1000,1000,Physical,Entities,IceMaterial,Basic|255/255/255/255|Stone/Stone17|10/10|0/0,;
+Scene,Nature/Boulder9,15,0,1,1,1,0,Boulder9,1219.557,-520.5,4454.418,339.802,152.0342,337.7668,500,1000,1000,Physical,Entities,IceMaterial,Basic|255/255/255/255|Stone/Stone17|10/10|0/0,;
+Scene,General/HumanReference,16,0,1,1,1,0,Human Reference,-910.0583,1064,1511.442,0,0,0,1,1,1,None,Entities,Default,Default|255/255/255/255,;
+Scene,Nature/Boulder6,17,0,1,1,1,0,Boulder6,-911.5587,600.5,1281.942,12.36401,100.14,322.4717,100,100,100,Physical,Entities,Default,Basic|255/255/255/255|Misc/Snow1|10/10|0/0,;
+Scene,Geometry/Cuboid,18,1,0,1,0,0,Cuboid,-679.7664,-788.5,5512.443,-2.561321E-06,270,336.8394,1000,10,100,Physical,All,Default,Basic|255/255/255/255|Misc/Dev1|100/10|0/0,;
+Scene,Nature/Tree15,21,0,1,1,1,0,Tree15,34.45918,238.7173,3609.729,3.090688,97.3875,0,1,1,1,None,Entities,Default,Default|255/255/255/255,;
+Scene,Nature/Tree16,22,0,1,1,1,0,Tree16,-657.7858,530.189,2873.01,0,237.1191,0,1,1,1,None,Entities,Default,Default|255/255/255/255,;
+Scene,Nature/Tree16,23,0,1,1,1,0,Tree16,-226.8502,530.8826,2993.898,3.090688,115.9345,0,1,1,1,None,Entities,Default,Default|255/255/255/255,;
+Scene,Nature/Tree14,24,0,1,1,1,0,Tree14,-376.2214,478.6833,3078.859,3.090688,25.8559,0,1,1,1,None,Entities,Default,Default|255/255/255/255,;
+Scene,Nature/Tree13,25,0,1,1,1,0,Tree13,19.72495,950.5892,2331.26,0,298.8598,0,1,1,1,None,Entities,Default,Default|255/255/255/255,;
+Scene,Nature/Tree16,26,0,1,1,1,0,Tree16,-429.8073,652.3231,2523.953,0,334.9813,0,1,1,1,None,Entities,Default,Default|255/255/255/255,;
+Scene,Nature/Tree14,27,0,1,1,1,0,Tree14,258.9523,63.90967,4057.571,0,169.5146,0,1,1,1,None,Entities,Default,Default|255/255/255/255,;
+Scene,Nature/Tree16,28,0,1,1,1,0,Tree16,-642.7794,-46.75069,4515.131,0,33.4674,0,1,1,1,None,Entities,Default,Default|255/255/255/255,;
+Scene,Nature/Tree13,29,0,1,1,1,0,Tree13,-406.3258,95.96219,4135.291,0,27.3471,0,1,1,1,None,Entities,Default,Default|255/255/255/255,;
+Scene,Nature/Tree15,30,0,1,1,1,0,Tree15,-378.9511,17.95334,4298.922,0,164.0531,0,1,1,1,None,Entities,Default,Default|255/255/255/255,;
+Scene,Nature/Tree13,31,0,1,1,1,0,Tree13,-972.6094,216.2541,3712.806,0,169.7382,0,1,1,1,None,Entities,Default,Default|255/255/255/255,;
+Scene,Nature/Tree14,32,0,1,1,1,0,Tree14,-913.8251,85.3858,4198.352,0,167.8568,0,1,1,1,None,Entities,Default,Default|255/255/255/255,;
+Scene,Nature/Tree15,33,0,1,1,1,0,Tree15,-1129.724,47.09671,4331.086,0,26.6017,0,1,1,1,None,Entities,Default,Default|255/255/255/255,;
+Scene,Nature/Tree15,59,0,1,1,1,0,Tree15,524.7395,358.0075,3216.397,2.003262,231.681,0,1,1,1,None,Entities,Default,Default|255/255/255/255,;
+Scene,Nature/Tree16,58,0,1,1,1,0,Tree16,517.2177,259.35,3469.355,2.003262,323.9943,0,1,1,1,None,Entities,Default,Default|255/255/255/255,;
+Scene,Nature/Tree13,57,0,1,1,1,0,Tree13,955.3744,159.6573,3686.36,2.003262,41.3471,0,1,1,1,None,Entities,Default,Default|255/255/255/255,;
+Scene,Nature/Tree14,56,0,1,1,1,0,Tree14,139.6108,163.7437,3861.448,0,130.4944,0,1,1,1,None,Entities,Default,Default|255/255/255/255,;
+Scene,Nature/Tree16,55,0,1,1,1,0,Tree16,291.4244,113.061,3928.362,0,113.4137,0,1,1,1,None,Entities,Default,Default|255/255/255/255,;
+Scene,Nature/Tree14,54,0,1,1,1,0,Tree14,103.6553,274.9671,3522.018,2.003262,136.592,0,1,1,1,None,Entities,Default,Default|255/255/255/255,;
+Scene,Nature/Tree15,53,0,1,1,1,0,Tree15,-8.701207,-120.5346,4527.16,0,122.1407,0,1,1,1,None,Entities,Default,Default|255/255/255/255,;
+Scene,Nature/Tree16,52,0,1,1,1,0,Tree16,1651.325,-231.7365,4793.017,0,313.3998,0,1,1,1,None,Entities,Default,Default|255/255/255/255,;
+Scene,Nature/Tree15,51,0,1,1,1,0,Tree15,1565.71,-366.2588,5274.557,0,74.8454,0,1,1,1,None,Entities,Default,Default|255/255/255/255,;
+Scene,Nature/Tree13,50,0,1,1,1,0,Tree13,1388.047,-137.527,4540.589,0,133.2437,0,1,1,1,None,Entities,Default,Default|255/255/255/255,;
+Scene,Nature/Tree13,49,0,1,1,1,0,Tree13,1147.542,-267.9285,5049.491,0,109.2078,0,1,1,1,None,Entities,Default,Default|255/255/255/255,;
+Scene,Nature/Tree13,48,0,1,1,1,0,Tree13,1484.64,-102.9276,4410.879,0,125.2089,0,1,1,1,None,Entities,Default,Default|255/255/255/255,;
+Scene,Nature/Tree13,47,0,1,1,1,0,Tree13,488.5797,-149.5917,4585.07,0,138.7621,0,1,1,1,None,Entities,Default,Default|255/255/255/255,;
+Scene,Nature/Tree16,60,0,1,1,1,0,Tree16,5.396057,-753.2708,6405.369,0,259.7702,0,1,1,1,None,Entities,Default,Default|255/255/255/255,;
+Scene,Nature/Tree16,61,0,1,1,1,0,Tree16,-199.0647,-850.1702,7395.66,0,169.9874,0,1,1,1,None,Entities,Default,Default|255/255/255/255,;
+Scene,Nature/Tree16,62,0,1,1,1,0,Tree16,-348.6202,-827.0538,6973.972,0,337.433,0,1,1,1,None,Entities,Default,Default|255/255/255/255,;
+Scene,Nature/Tree15,63,0,1,1,1,0,Tree15,-203.6186,-850.5402,7054.588,0,238.1345,0,1,1,1,None,Entities,Default,Default|255/255/255/255,;
+Scene,Nature/Tree14,64,0,1,1,1,0,Tree14,-615.7267,-877.989,7410.073,0,105.1464,0,1,1,1,None,Entities,Default,Default|255/255/255/255,;
+Scene,Nature/Tree16,65,0,1,1,1,0,Tree16,242.1876,-622.7325,5964.267,0,315.9653,0,1,1,1,None,Entities,Default,Default|255/255/255/255,;
+Scene,Nature/Tree16,66,0,1,1,1,0,Tree16,1135.294,-664.925,6438.441,0,260.4526,0,1,1,1,None,Entities,Default,Default|255/255/255/255,;
+Scene,Nature/Tree14,67,0,1,1,1,0,Tree14,688.5802,-719.7051,6463.635,0,73.2182,0,1,1,1,None,Entities,Default,Default|255/255/255/255,;
+Scene,Nature/Tree15,68,0,1,1,1,0,Tree15,806.6512,-679.7561,6347.087,0,127.5156,0,1,1,1,None,Entities,Default,Default|255/255/255/255,;
+Scene,Nature/Tree15,69,0,1,1,1,0,Tree15,668.9177,-822.7783,7169.88,0,56.673,0,1,1,1,None,Entities,Default,Default|255/255/255/255,;
+Scene,Nature/Tree16,70,0,1,1,1,0,Tree16,1032.19,-749.4669,6842.401,0,169.0016,0,1,1,1,None,Entities,Default,Default|255/255/255/255,;
+Scene,Nature/Tree14,71,0,1,1,1,0,Tree14,1264.983,-759.7167,6942.592,0,53.2924,0,1,1,1,None,Entities,Default,Default|255/255/255/255,;
+Scene,Nature/Tree16,72,0,1,1,1,0,Tree16,-598.8833,-727.4006,6231.068,0,302.1413,0,1,1,1,None,Entities,Default,Default|255/255/255/255,;
+Scene,Nature/Tree14,73,0,1,1,1,0,Tree14,-387.374,-692.9382,6091.444,0,265.162,0,1,1,1,None,Entities,Default,Default|255/255/255/255,;
+Scene,Nature/Tree16,74,0,1,1,1,0,Tree16,150.4643,-687.5416,6174.727,0,264.6357,0,1,1,1,None,Entities,Default,Default|255/255/255/255,;
+Scene,Nature/Tree14,75,0,1,1,1,0,Tree14,117.829,-622.7325,6012.062,0,27.3618,0,1,1,1,None,Entities,Default,Default|255/255/255/255,;
+Scene,Nature/Tree14,76,0,1,1,1,0,Tree14,-106.2602,-753.2708,6399.326,0,336.6384,0,1,1,1,None,Entities,Default,Default|255/255/255/255,;
+Scene,Nature/Tree14,77,0,1,1,1,0,Tree14,780.2561,-606.3745,5912.942,0,136.0239,0,1,1,1,None,Entities,Default,Default|255/255/255/255,;
+Scene,Nature/Tree13,78,0,1,1,1,0,Tree13,541.4598,-490.1533,5472.923,0,81.902,0,1,1,1,None,Entities,Default,Default|255/255/255/255,;
+Scene,Nature/Tree13,79,0,1,1,1,0,Tree13,-1031.999,-861.9598,7153.311,0,222.2787,0,1,1,1,None,Entities,Default,Default|255/255/255/255,;
+Scene,Nature/Tree15,80,0,1,1,1,0,Tree15,113.4459,-313.7726,4941.911,0,210.3865,0,1,1,1,None,Entities,Default,Default|255/255/255/255,;
+Scene,Nature/Tree14,81,0,1,1,1,0,Tree14,260.4133,-270.3141,4864.938,0,64.9803,0,1,1,1,None,Entities,Default,Default|255/255/255/255,;
+Scene,Nature/Tree16,82,0,1,1,1,0,Tree16,42.43421,-63.54605,4402.319,0,178.7201,0,1,1,1,None,Entities,Default,Default|255/255/255/255,;
+Scene,Nature/Tree15,83,0,1,1,1,0,Tree15,485.5241,9.981341,4195.241,0,43.9785,0,1,1,1,None,Entities,Default,Default|255/255/255/255,;
+Scene,Nature/Tree16,84,0,1,1,1,0,Tree16,-174.1756,-220.5529,4758.54,0,268.6526,0,1,1,1,None,Entities,Default,Default|255/255/255/255,;
+Scene,Nature/Tree14,85,0,1,1,1,0,Tree14,-461.7745,-621.9309,5820.607,0,121.4145,0,1,1,1,None,Entities,Default,Default|255/255/255/255,;
+Scene,Nature/Tree14,86,0,1,1,1,0,Tree14,-263.7977,410.474,3170.232,3.090688,341.6875,0,1,1,1,None,Entities,Default,Default|255/255/255/255,;
+Scene,Nature/Tree13,87,0,1,1,1,0,Tree13,-337.485,393.8288,3217.915,3.090688,319.1833,0,1,1,1,None,Entities,Default,Default|255/255/255/255,;
+Scene,Nature/Tree16,88,0,1,1,1,0,Tree16,-43.34462,335.8983,3339.476,3.090688,85.7736,0,1,1,1,None,Entities,Default,Default|255/255/255/255,
+/// Logic
+class Main
+{
+    _mount = null;
+    _originalSnowboard = null;
+
+    function OnGameStart()
+    {
+        self._originalSnowboard = Map.FindMapObjectByID(2);
+        self._originalSnowboard.GetComponent("SnowboardMount").Active = false;
+    }
+
+    function OnFrame()
+    {
+        if (Input.GetKeyDown("Interaction/Interact"))
+        {
+            self._mount.Enable(!self._mount._Enabled);
+        }
+    }
+
+    function OnCharacterSpawn(character)
+    {
+        if (character.IsMainCharacter && character.IsMine)
+        {
+            self.CreateSnowboard(character);
+        }
+    }
+
+    function CreateSnowboard(human)
+    {
+        snowboard = Map.CopyMapObject(self._originalSnowboard, true);
+        snowboard.Active = true;
+        snowboard.Position = human.Position;
+        mount = snowboard.GetComponent("SnowboardMount");
+        mount.Active = true;
+        mount.Setup(human);
+        mount.Enable(false);
+        self._mount = mount;
+    }
+}
+
+component SnowboardMount
+{
+    JumpForce = 7.0;
+    TurnSpeed = 2.0;
+    TurnAttenuation = 30;
+
+    AirTurnSpeed = 2;
+
+    _Human = null;
+    _Enabled = false;
+    _chest = "";
+    _rigidbody = null;
+    _origin = null;
+    _mount = null;
+    _board = null;
+    _animate = false;
+    _grounded = false;
+    _groundUpdate = false;
+    _timeAirborne = 0.0;
+
+    _snowLineRenderer = null;
+
+    function Setup(human)
+    {
+        self._rigidbody = self.MapObject.GetComponent("Rigidbody");
+        self._origin = self.MapObject.GetChild("origin");
+        self._mount = self._origin.GetChild("board_mount");
+        self._board = self._origin.GetChild("board");
+        self._Human = human;
+        self._chest = human.Transform.GetTransform("Armature/Core/Controller_Body/hip/spine/chest");
+    }
+
+    function Enable(enabled)
+    {
+        self._Enabled = enabled;
+        if (enabled)
+        {
+            self.MountRoutine();
+            self._Human.ClearHooks();
+        }
+        else
+        {
+            self._Human.Unmount();
+            if (self._snowLineRenderer != null)
+            {
+                self.DestroyTrail(self._snowLineRenderer);
+            }
+            self._Human.Velocity = self._rigidbody.GetVelocity();
+            self._animate = false;
+            self.BoardToBack();
+        }
+    }
+
+    coroutine BoardToBack()
+    {
+        duration = 0.5;
+
+        self._board.Parent = self._chest;
+
+        pos = self._board.Position;
+        rot = self._board.QuaternionLocalRotation;
+
+        time = 0;
+        while (time < duration)
+        {
+            self._board.Position = Vector3.Lerp(pos, self._chest.Position + self._chest.Forward * 0.2, time / duration);
+            self._board.QuaternionLocalRotation = Quaternion.Slerp(rot, Quaternion.FromEuler(Vector3(0, 0, 20)), time / duration);
+
+            time += Time.FrameTime;
+        }
+
+        self._board.Position = self._chest.Position + self._chest.Forward * 0.2;
+        self._board.QuaternionLocalRotation = Quaternion.FromEuler(Vector3(0, 0, 20));
+    }
+
+    coroutine MountRoutine()
+    {
+        duration = 0.3;
+
+        self._board.Parent = self._origin;
+        pos = self._board.Position;
+        rot = self._board.QuaternionLocalRotation;
+
+        time = 0;
+        while (time < duration)
+        {
+            self._board.Position = Vector3.Lerp(pos, self._Human.Position, time / duration);
+            self._board.QuaternionLocalRotation = Quaternion.Slerp(rot, Quaternion.FromEuler(Vector3(90, 0, 0)), time / duration);
+
+            time += Time.FrameTime;
+        }
+
+        self._board.LocalPosition = Vector3.Down * 0.75;
+        self._board.QuaternionLocalRotation = Quaternion.FromEuler(Vector3(90, 0, 0));
+        self._rigidbody.SetVelocity(self._Human.Velocity);
+        self.MapObject.Parent = null;
+        self.MapObject.Position = self._Human.Position;
+        self.MapObject.Forward = self._Human.Forward;
+
+        wait 0.0;
+
+        self._Human.Velocity = Vector3.Zero;
+        #self._Human.MountMapObject(self._mount, Vector3.Zero, Vector3(40, -90, -20));
+        self._Human.MountMapObject(self._mount, Vector3.Zero, Vector3(0, 0, 0));
+        self._Human.Position = self._Human.Position + Vector3.Up;
+        self.CrossfadeIfNotPlaying("Armature|air2_backward");
+        self._animate = true;
+    }
+
+    function OnTick()
+    {
+        if (self._Enabled)
+        {
+            cast = Physics.LineCast(self.MapObject.Position + self.MapObject.Up * 0.1, self.MapObject.Position - self.MapObject.Up * 0.1, "MapObjects");
+            self._grounded = cast != null;
+            vel = self._rigidbody.GetVelocity();
+
+            if (self._grounded)
+            {
+                if (self._groundUpdate)
+                {
+                    self._Human.PlaySound("Land");
+                    self._Human.PlaySound("GasLoop");
+                    self.CreateRenderer();
+                    self._timeAirborne = 0.0;
+                }
+                self._groundUpdate = false;
+
+                target = Quaternion.FromToRotation(self.MapObject.Up, cast.Normal) * self.MapObject.QuaternionRotation;
+                self.MapObject.QuaternionRotation = Quaternion.Lerp(self.MapObject.QuaternionRotation, target, Time.TickTime * 3);
+                turnSpeed = Math.Clamp(vel.Magnitude, 2, 10) / 10;
+                invert = Math.Sign(Vector3.Dot(self.MapObject.Forward, vel));
+                Game.Print(Vector3.Angle(self.MapObject.Forward, vel) - 180);
+                if (Input.GetKeyHold("General/Left"))
+                {
+                    self.MapObject.Transform.RotateAround(self.MapObject.Position, self.MapObject.Up, 0.0 - self.TurnSpeed * Time.TickTime);
+                    self._origin.LocalRotation = Vector3.Lerp(self._origin.LocalRotation, Vector3(0, 0, 30) * invert, Time.TickTime * 5);
+                }
+                elif (Input.GetKeyHold("General/Right"))
+                {
+                    self.MapObject.Transform.RotateAround(self.MapObject.Position, self.MapObject.Up, self.TurnSpeed * Time.TickTime);
+                    self._origin.LocalRotation = Vector3.Lerp(self._origin.LocalRotation, Vector3(0, 0, -30) * invert, Time.TickTime * 5);
+                }
+                else
+                {
+                    self._origin.LocalRotation = Vector3.Lerp(self._origin.LocalRotation, Vector3.Zero, Time.TickTime * 3);
+                }
+
+                self._rigidbody.AddForce((self.MapObject.Right * (1-Vector3.Dot(vel, self.MapObject.Right)) + vel / self.TurnAttenuation) * 2);
+            }
+            else
+            {
+                if (!self._groundUpdate)
+                {
+                    self._Human.PlaySound("Jump");
+                    self._Human.StopSound("GasLoop");
+                    self._snowLineRenderer = null;
+                }
+                self._groundUpdate = true;
+                self._timeAirborne += Time.TickTime;
+
+                x = 0.0;
+                y = 0.0;
+                z = 0.0;
+                if (Input.GetKeyHold("General/Forward"))
+                {
+                    x = 1.0;
+                }
+                elif (Input.GetKeyHold("General/Back"))
+                {
+                    x = -1.0;
+                }
+                if (Input.GetKeyHold("General/Right"))
+                {
+                    y = 1.0;
+                }
+                elif (Input.GetKeyHold("General/Left"))
+                {
+                    y = -1.0;
+                }
+                if (Input.GetKeyHold("Human/HookLeft"))
+                {
+                    z = 1.0;
+                }
+                elif (Input.GetKeyHold("Human/HookRight"))
+                {
+                    z = -1.0;
+                }
+                self.MapObject.Transform.RotateAround(self.MapObject.Position, self.MapObject.Right,   x * self.AirTurnSpeed);
+                self.MapObject.Transform.RotateAround(self.MapObject.Position, self.MapObject.Up,      y * self.AirTurnSpeed);
+                self.MapObject.Transform.RotateAround(self.MapObject.Position, self.MapObject.Forward, z * self.AirTurnSpeed);
+            }
+            t = Vector3.Dot(self.MapObject.Forward, vel.Normalized);
+            self.MapObject.QuaternionRotation = Quaternion.Lerp(self.MapObject.QuaternionRotation, Quaternion.LookRotation(vel * Math.Sign(t), Vector3.Up), Time.TickTime * Math.Abs(t));
+
+            if (self._animate)
+            {
+                if (self._grounded)
+                {
+                    self.CrossfadeIfNotPlaying("Armature|air2_backward");
+                }
+                elif (self._timeAirborne > 1.0)
+                {
+                    self.CrossfadeIfNotPlaying("Armature|onWall");
+                }
+            }
+        }
+
+        limit = 30;
+        if (self._snowLineRenderer != null)
+        {
+            if (self._snowLineRenderer.PositionCount == limit)
+            {
+                for (i in Range(0, self._snowLineRenderer.PositionCount - 1, 1))
+                {
+                    self._snowLineRenderer.SetPosition(i, self._snowLineRenderer.GetPosition(i+1));
+                }
+                self._snowLineRenderer.PositionCount = limit - 1;
+            }
+            else
+            {
+                self._snowLineRenderer.PositionCount = self._snowLineRenderer.PositionCount + 1;
+            }
+            self._snowLineRenderer.SetPosition(self._snowLineRenderer.PositionCount - 1, self.MapObject.Position);
+        }
+    }
+
+    function OnFrame()
+    {
+        if (self._Enabled)
+        {
+            if (self._grounded)
+            {
+                if (Input.GetKeyUp("Human/Jump"))
+                {
+                    self._Human.PlaySound("Switchback");
+                    self._rigidbody.AddForceWithMode(self.MapObject.Up * self.JumpForce, "Impulse");
+                }
+            }
+        }
+    }
+    function CrossfadeIfNotPlaying(animation)
+    {
+        if (self._Human.CurrentAnimation != animation)
+        {
+            self._Human.PlayAnimation(animation, 0.5);
+        }
+    }
+
+    function GetTilt(maxAngle)
+    {
+        vel = self._rigidbody.GetVelocity();
+        fwd = self._mount.Forward;
+
+        fwdy = fwd;
+        vely = vel;
+        fwdy.Y = 0;
+        vely.Y = 0;
+        ang = Vector3.SignedAngle(vel.Normalized, fwd.Normalized, Vector3.Down);
+        #Game.Print(ang);
+        return Math.Clamp(ang, -90, 90) / 90 * maxAngle;
+    }
+
+    function CreateRenderer()
+    {
+        if (self._snowLineRenderer != null)
+        {
+            self.DestroyTrail(self._snowLineRenderer);
+        }
+
+        self._snowLineRenderer = LineRenderer.CreateLineRenderer();
+        self._snowLineRenderer.LineColor = Color(255, 255, 255);
+        self._snowLineRenderer.PositionCount = 0;
+        self._snowLineRenderer.Enabled = true;
+        self._snowLineRenderer.StartWidth = 0.1;
+        self._snowLineRenderer.EndWidth = 0.5;
+        self._snowLineRenderer.SetPosition(0, self.MapObject.Position);
+    }
+
+    function DestroyTrail(trail)
+    {
+        wait 10.0;
+
+        trail.Enabled = false;
+        trail.PositionCount = 0;
+    }
+}
+
+/// Weather
+{
+    "Skybox" : "Day1",
+    "SkyboxColor" : [
+        171,
+        186,
+        202,
+        255
+    ],
+    "Daylight" : [
+        255,
+        255,
+        255,
+        255
+    ],
+    "DaylightIntensity" : 1.08604371547699,
+    "DaylightDirection" : [
+        45,
+        45,
+        0
+    ],
+    "AmbientLight" : [
+        84,
+        87,
+        114,
+        255
+    ],
+    "Flashlight" : [
+        255,
+        255,
+        255,
+        0
+    ],
+    "FogDensity" : 0,
+    "FogColor" : [
+        155,
+        173,
+        179,
+        255
+    ],
+    "Rain" : 0,
+    "Thunder" : 0,
+    "Snow" : 0.614455997943878,
+    "Wind" : 0,
+    "WindDirection" : [
+        1,
+        0,
+        0
+    ],
+    "RainForce" : 0,
+    "SnowForce" : 0,
+    "WindForce" : 0,
+    "UseSchedule" : false,
+    "ScheduleLoop" : false,
+    "Schedule" : "",
+    "Name" : "Set 1",
+    "Preset" : false
+}
