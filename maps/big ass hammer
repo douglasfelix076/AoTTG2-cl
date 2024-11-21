@@ -1,0 +1,285 @@
+/// Options
+EditorVersion:1.0|Description:|HasWeather:1
+/// CustomAssets
+
+/// Objects
+Scene,Geometry/Cuboid,0,0,1,1,1,0,Unnamed,0,-25,0,0,0,0,200,5,200,Physical,Entities,Default,Basic|255/255/255/255|Misc/Dev1|50/50|0/0,;
+Scene,General/EditorDaylight,1,0,1,1,0,0,Daylight,0,16.5,37,53.13011,126.8699,0,1,1,1,None,Entities,Default,DefaultNoTint|255/255/255/255,Daylight|Color:255/255/255/255|Intensity:1|WeatherControlled:true;
+Scene,Geometry/Cylinder1,2,11,1,0,1,0,Cylinder1,0,7,0,0,0,0,0.5,5,0.5,None,MapObjects,Default,Basic|255/255/255/255|Metal/Metal1|0.1/2|0/0,;
+Scene,Geometry/Cylinder1,3,11,1,0,1,0,Cylinder1,0,16.5,0,0,0,90,10,8,10,None,All,Default,Basic|255/255/255/255|Wood/Wood8|0.2/1|0/0,;
+Scene,General/HumanReference,4,0,1,1,1,0,Human Reference,-2.5,0,0,0,0,0,1,1,1,None,Entities,Default,Default|255/255/255/255,;
+Scene,Geometry/Cylinder1,7,11,1,0,1,0,Cylinder1,0,1,0,0,0,0,0.7,1,0.7,None,MapObjects,Default,Basic|255/255/255/255|Wood/Wood8|0.1/0.7|0/0,;
+Scene,Geometry/Cylinder1,6,11,1,0,1,0,Cylinder1,0,11,0,0,0,0,0.7,1,0.7,None,All,Default,Basic|255/255/255/255|Wood/Wood8|0.1/0.7|0/0,;
+Scene,Geometry/Cylinder1,8,11,1,0,1,0,Cylinder1,-8,16.5,0,0,0,90,11,1,11,Region,Titans,Default,Basic|255/255/255/255|Metal/Metal1|0.1/0.1|0/0,;
+Scene,Geometry/Cylinder1,9,11,1,0,1,0,Cylinder1,8,16.5,0,0,0,90,11,1,11,Region,Titans,Default,Basic|255/255/255/255|Metal/Metal1|0.1/0.1|0/0,;
+Scene,None,11,0,0,0,1,0,HammerOriginR,0,0,0,0,0,0,1,1,1,None,MapObjects,Default,Default|255/255/255/255,Hammer|LeftHanded:false;
+Scene,Geometry/Cube1,13,11,1,0,0,0,collider,-6,14.5,0,0,0,0,15,20,15,Region,Titans,Default,Default|255/255/255/255,HammerCollision|;
+Scene,General/EditorHumanSpawnPoint,16,0,1,1,0,0,Human SpawnPoint,3.5,23,-161.5,0,0,0,1,1,1,None,Entities,Default,Default|255/255/255/255,Tag|Name:HumanSpawnPoint;
+Scene,General/EditorTitanSpawnPoint,17,0,1,1,0,0,Titan SpawnPoint,172.5,0,122,0,0,0,1,1,1,None,Entities,Default,Default|255/255/255/255,Tag|Name:TitanSpawnPoint;
+Scene,General/EditorTitanSpawnPoint,18,0,1,1,0,0,Titan SpawnPoint,-400,0,-308,0,0,0,1,1,1,None,Entities,Default,Default|255/255/255/255,Tag|Name:TitanSpawnPoint;
+Scene,General/EditorTitanSpawnPoint,19,0,1,1,0,0,Titan SpawnPoint,-400,0,272.5,0,0,0,1,1,1,None,Entities,Default,Default|255/255/255/255,Tag|Name:TitanSpawnPoint;
+Scene,General/EditorTitanSpawnPoint,20,0,1,1,0,0,Titan SpawnPoint,-169,0,233.5,0,0,0,1,1,1,None,Entities,Default,Default|255/255/255/255,Tag|Name:TitanSpawnPoint;
+Scene,General/EditorTitanSpawnPoint,21,0,1,1,0,0,Titan SpawnPoint,328.125,0,233.5,0,0,0,1,1,1,None,Entities,Default,Default|255/255/255/255,Tag|Name:TitanSpawnPoint;
+Scene,General/EditorTitanSpawnPoint,22,0,1,1,0,0,Titan SpawnPoint,97.125,0,272.5,0,0,0,1,1,1,None,Entities,Default,Default|255/255/255/255,Tag|Name:TitanSpawnPoint;
+Scene,General/EditorTitanSpawnPoint,23,0,1,1,0,0,Titan SpawnPoint,97.125,0,-308,0,0,0,1,1,1,None,Entities,Default,Default|255/255/255/255,Tag|Name:TitanSpawnPoint;
+Scene,General/EditorTitanSpawnPoint,24,0,1,1,0,0,Titan SpawnPoint,669.625,0,122,0,0,0,1,1,1,None,Entities,Default,Default|255/255/255/255,Tag|Name:TitanSpawnPoint;
+Scene,General/EditorTitanSpawnPoint,25,0,1,1,0,0,Titan SpawnPoint,-169,0,95,0,0,0,1,1,1,None,Entities,Default,Default|255/255/255/255,Tag|Name:TitanSpawnPoint;
+Scene,General/EditorTitanSpawnPoint,26,0,1,1,0,0,Titan SpawnPoint,-400,0,134,0,0,0,1,1,1,None,Entities,Default,Default|255/255/255/255,Tag|Name:TitanSpawnPoint;
+Scene,General/EditorTitanSpawnPoint,27,0,1,1,0,0,Titan SpawnPoint,-400,0,-446.5,0,0,0,1,1,1,None,Entities,Default,Default|255/255/255/255,Tag|Name:TitanSpawnPoint;
+Scene,General/EditorTitanSpawnPoint,28,0,1,1,0,0,Titan SpawnPoint,172.5,0,-16.5,0,0,0,1,1,1,None,Entities,Default,Default|255/255/255/255,Tag|Name:TitanSpawnPoint;
+Scene,Geometry/Cylinder1,29,37,1,0,1,0,Cylinder1,0,7,-21.5,0,0,0,0.5,5,0.5,None,MapObjects,Default,Basic|255/255/255/255|Metal/Metal1|0.1/2|0/0,;
+Scene,Geometry/Cylinder1,30,37,1,0,1,0,Cylinder1,0,16.5,-21.5,0,0,90,10,8,10,None,All,Default,Basic|255/255/255/255|Wood/Wood8|0.2/1|0/0,;
+Scene,Geometry/Cylinder1,32,37,1,0,1,0,Cylinder1,0,1,-21.5,0,0,0,0.7,1,0.7,None,MapObjects,Default,Basic|255/255/255/255|Wood/Wood8|0.1/0.7|0/0,;
+Scene,Geometry/Cylinder1,33,37,1,0,1,0,Cylinder1,0,11,-21.5,0,0,0,0.7,1,0.7,None,All,Default,Basic|255/255/255/255|Wood/Wood8|0.1/0.7|0/0,;
+Scene,Geometry/Cylinder1,34,37,1,0,1,0,Cylinder1,-8,16.5,-21.5,0,0,90,11,1,11,Region,Titans,Default,Basic|255/255/255/255|Metal/Metal1|0.1/0.1|0/0,;
+Scene,Geometry/Cylinder1,35,37,1,0,1,0,Cylinder1,8,16.5,-21.5,0,0,90,11,1,11,Region,Titans,Default,Basic|255/255/255/255|Metal/Metal1|0.1/0.1|0/0,;
+Scene,Geometry/Cube1,36,37,1,0,0,0,collider,-6,14.5,-21.5,0,0,0,15,20,15,Region,Titans,Default,Default|255/255/255/255,HammerCollision|;
+Scene,None,37,0,0,0,1,0,HammerOriginL,0,0,-21.5,0,0,0,1,1,1,None,MapObjects,Default,Default|255/255/255/255,Hammer|LeftHanded:true
+/// Logic
+class Main
+{
+    TitanSpeed = 1.0;
+    TitanSpawnSpeed = 1.0;
+    MaxTitans = 70;
+    TitanBlowawayForce = 200.0;
+    _spawnTimer = 0.0;
+    _hammerL = null;
+    _hammerR = null;
+    
+    function Init()
+    {
+        self._hammerL = Map.FindMapObjectByName("HammerOriginL");
+        self._hammerR = Map.FindMapObjectByName("HammerOriginR");
+        Camera.FollowDistance = 6;
+        self.Wait();
+    }
+
+    function OnCharacterSpawn(character)
+    {
+        if (character.Type == "Human")
+        {
+            character.Speed = 4;
+            character.MaxGas = 99999;
+            character.CurrentGas = 99999;
+            character.MaxBladeDurability = 99999;
+            character.CurrentBladeDurability = 99999;
+        }
+    }
+    
+    function OnNetworkMessage(sender, message)
+    {
+        viewID = Convert.ToInt(message);
+        titan = Game.FindCharacterByViewID(viewID);
+        if (titan != null)
+        {
+            self.CreateRagdoll(sender.Character.Position, titan, Network.MyPlayer.Name);
+        }
+    }
+
+    coroutine Wait()
+    {
+        wait 1.0 / self.TitanSpawnSpeed;
+
+        if (Game.Titans.Count < self.MaxTitans)
+        {
+            pos = Random.RandomDirection();
+            pos.Y = 0;
+            pos = pos.Normalized * Random.RandomFloat(100, 200);
+            titan = Game.SpawnTitanAt("Default", pos);
+            titan.FocusRange = 1000;
+            titan.DetectRange = 1000;
+            titan.RunSpeedBase = titan.RunSpeedBase * self.TitanSpeed; 
+        }
+
+        self.Wait();
+    }
+    
+    function OnTick()
+    {
+        self._spawnTimer -= Time.TickTime;
+
+    }
+
+    function OnCharacterSpawn(character)
+    {
+        if (character.Type == "Human")
+        {
+            hammerL = Map.CopyMapObject(self._hammerL, true);
+            hammerR = Map.CopyMapObject(self._hammerR, true);
+            hammerL.Active = true;
+            hammerR.Active = true;
+            hammerL.GetComponent("Hammer").Setup(character);
+            hammerR.GetComponent("Hammer").Setup(character);
+        }
+    }
+
+    function CreateRagdoll(hammer, titan, name)
+    {
+        pos = titan.Position.X + ", " + (titan.Position.Y + titan.Size * 10) + ", " + titan.Position.Z;
+        rot = titan.Rotation.X + ", " + titan.Rotation.Y + ", " + titan.Rotation.Z;
+        
+        r = Map.CreateMapObjectRaw("Scene,Geometry/Capsule,15,0,1,1,0,0,Capsule,"+pos+","+rot+",0.9,0.9,0.9,Physical,MapObjects,Default,Default|255/0/255/255,RagdollTitan|,Rigidbody|Mass:2|Gravity:0/-20/0|FreezeRotation:false|Interpolate:false");
+        r.GetComponent("RagdollTitan").Setup(titan);
+        
+        rb = r.GetComponent("Rigidbody");
+        force = ((r.Position - hammer).Normalized) * self.TitanBlowawayForce;
+        torque = Random.RandomVector3(Vector3(0.1,0.1,0.1) * (0-self.TitanBlowawayForce), Vector3(0.1,0.1,0.1) * self.TitanBlowawayForce);
+        rb.AddForceWithMode(force, "VelocityChange");
+        rb.AddTorque(torque, "VelocityChange");
+        
+        titan.GetKilled(name);
+        titan.PlayAnimation("Idle");
+    }
+}
+
+component RagdollTitan
+{
+    titan = null;
+    
+    function Setup(titan)
+    {
+        self.titan = titan;
+    }
+
+    function OnFrame()
+    {
+        if (self.titan != null)
+        {
+            self.titan.Position = self.MapObject.Position - self.MapObject.Up * self.titan.Size * 10;
+            self.titan.QuaternionRotation = self.MapObject.QuaternionRotation;
+        }
+        else
+        {
+            Map.DestroyMapObject(self.MapObject, true);
+        }
+    }
+
+}
+
+component Hammer
+{
+    LeftHanded = false;
+
+    _human = null;
+    _collider = null;
+
+    function HandleCollision(other)
+    {
+        if (self._human.IsMine && ((self._human.State == "Attack" && !Input.GetKeyHold("Human/AttackDefault")) || (self._human.State == "SpecialAttack" && !Input.GetKeyHold("Human/AttackSpecial"))))
+        {
+            Game.SpawnEffect("Boom1", self._collider.MapObject.Position, Vector3.Zero, 2);
+            if (Network.IsMasterClient)
+            {
+                Main.CreateRagdoll(self.MapObject.Position, other, Network.MyPlayer.Name);
+            }
+            else
+            {
+                Network.SendMessage(Network.MasterClient, Convert.ToString(other.ViewID));
+            }
+        }
+    }
+
+    function Setup(human)
+    {
+        # waits a frame since components are loaded a frame after the object is copied
+        wait 0.0;
+
+        self._collider = self.MapObject.GetChild("collider").GetComponent("HammerCollision");
+        self._collider.SetHandler(self);
+
+        transform = null;
+
+        if (self.LeftHanded)
+        {
+            transform = human.Transform.GetTransform("Armature/Core/Controller_Body/hip/spine/chest/shoulder_L/upper_arm_L/forearm_L/hand_L");
+            self.MapObject.Parent = transform;
+            self.MapObject.LocalRotation = Vector3(0,0,90);
+        }
+        else
+        {
+            transform = human.Transform.GetTransform("Armature/Core/Controller_Body/hip/spine/chest/shoulder_R/upper_arm_R/forearm_R/hand_R");
+            self.MapObject.Parent = transform;
+            self.MapObject.LocalRotation = Vector3(0,0,-90);
+        }
+
+        self.MapObject.LocalPosition = Vector3.Zero;
+        self._human = human;
+    }
+}
+
+component HammerCollision
+{
+    _handler = null;
+
+    function SetHandler(handler)
+    {
+        self._handler = handler;
+    }
+    
+    function OnCollisionEnter(other)
+    {
+        if (self._handler != null && other.Type == "Titan" && other.Health > 0)
+        {
+            self._handler.HandleCollision(other);
+        }
+    }
+}
+
+/// Weather
+{
+    "Skybox" : "Day1",
+    "SkyboxColor" : [
+        128,
+        128,
+        128,
+        255
+    ],
+    "Daylight" : [
+        255,
+        255,
+        255,
+        255
+    ],
+    "DaylightIntensity" : 1,
+    "DaylightDirection" : [
+        45,
+        45,
+        0
+    ],
+    "AmbientLight" : [
+        126,
+        122,
+        114,
+        255
+    ],
+    "Flashlight" : [
+        255,
+        255,
+        255,
+        0
+    ],
+    "FogDensity" : 0,
+    "FogColor" : [
+        128,
+        128,
+        128,
+        255
+    ],
+    "Rain" : 0,
+    "Thunder" : 0,
+    "Snow" : 0,
+    "Wind" : 0,
+    "WindDirection" : [
+        1,
+        0,
+        0
+    ],
+    "RainForce" : 0,
+    "SnowForce" : 0,
+    "WindForce" : 0,
+    "UseSchedule" : false,
+    "ScheduleLoop" : false,
+    "Schedule" : "",
+    "Name" : "Set 1",
+    "Preset" : false
+}
