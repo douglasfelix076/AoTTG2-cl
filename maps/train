@@ -1,0 +1,823 @@
+/// Options
+EditorVersion:1.0|Description:|HasWeather:1
+/// CustomAssets
+
+/// Objects
+Scene,Geometry/Cuboid,0,0,1,1,1,0,Unnamed,0,-25,0,0,0,0,1000,5,1000,Physical,Entities,Default,Basic|255/255/255/255|Misc/Dev1|25/25|0/0,;
+Scene,General/EditorDaylight,1,0,1,1,0,0,Daylight,0,30.09941,0,53.13011,126.8699,0,1,1,1,None,Entities,Default,DefaultNoTint|255/255/255/255,Daylight|Color:255/255/255/255|Intensity:1|WeatherControlled:true;
+Scene,General/EditorCameraSpawnPoint,9,0,1,1,0,0,Camera SpawnPoint,33,22,2,15,270,9.722806E-06,1,1,1,None,Entities,Default,Default|255/255/255/255,Tag|Name:CameraSpawnPoint;
+Scene,General/HumanReference,3,0,1,1,1,0,Human Reference,3,13,-12,0,0,0,1,1,1,None,Entities,Default,Default|255/255/255/255,;
+Scene,Decor/Platform1,6,0,1,0,1,0,Platform1,0,0,0,0,0,0,3,1,3,Physical,Entities,Default,Default|255/255/255/255,;
+Scene,Geometry/Cube1,165,52,1,0,1,0,Cube1,-53.5,11,-11,0,0,0,1,3,6,Physical,Entities,Default,Transparent|255/255/255/255|Misc/Glass1|1/1|0/0,;
+Scene,General/MaxTitanReference,11,0,1,1,1,0,Max Titan Reference,0,0,300,0,180,0,1,1,1,None,Entities,Default,Default|255/255/255/255,;
+Scene,None,136,137,1,0,0,0,WagonAShake,-44,8,-7,0,0,0,1,1,1,None,Entities,Default,Default|255/255/255/255,Shake|Amplitude:0.3|Frequency:0.8|Intensity:4|Speed:0.1;
+Scene,Geometry/GeoRamp1e,236,52,1,0,1,0,GeoRamp1e,-58,8,-22,0,270,90,1,8,6,Physical,Entities,Default,Default|0/0/0/255,;
+Scene,Geometry/Hedron1a,21,0,1,1,0,0,path_0,-51.96285,3,427.5,0,0,0,10,10,10,None,Entities,Default,Default|255/0/255/255,;
+Scene,Geometry/Hedron1a,40,0,1,1,0,0,path_1,-52.05018,3,-108.5,0,0,0,10,10,10,None,Entities,Default,Default|255/0/255/255,;
+Scene,Geometry/Hedron1a,41,0,1,1,0,0,path_2,-182.4434,3,-270,0,0,0,10,10,10,None,Entities,Default,Default|255/0/255/255,;
+Scene,Geometry/Hedron1a,42,0,1,1,0,0,path_4,-716,3,-274,0,0,0,10,10,10,None,Entities,Default,Default|255/0/255/255,;
+Scene,Geometry/Cube1,47,52,1,0,1,0,Cube1,-53.5,9,-7,0,0,0,1,1,20,Physical,Entities,Default,Default|80/90/110/255,;
+Scene,Geometry/Cube1,45,52,1,0,1,0,Cube1,-58,8,-7,0,0,0,10,1,20,Physical,Entities,Default,Default|0/0/0/255,;
+Scene,Geometry/Cylinder1a,241,0,1,0,1,1,Cylinder1a,45.25,7.5,-12,0,0,0,40,1,40,Physical,Entities,Default,Basic|0/255/255/255|Misc/None|2/2|0.08/0.25,MovePingPong|RelativePositions:true|StartPosition:0/0/0|EndPosition:0/0/54|Speed:15|PauseTime:0;
+Scene,Geometry/Cube1,48,52,1,0,1,0,Cube1,-53.5,13,-7,0,0,0,1,1,20,Physical,Entities,Default,Default|80/90/110/255,;
+Scene,Geometry/Cube1,49,52,1,0,1,0,Cube1,-53.5,11,-7,0,0,0,1,3,2,Physical,Entities,Default,Default|80/90/110/255,;
+Scene,Geometry/Cube1,50,52,1,0,1,0,Cube1,-53.5,11,1.5,0,0,0,1,3,3,Physical,Entities,Default,Default|80/90/110/255,;
+Scene,Geometry/Hedron1a,33,0,1,1,1,0,Spline,-47,-3.5,63.5,0,0,0,3,3,3,Physical,Entities,Default,Default|255/255/0/255,Spline|NamePrefix:path|Resolution:4|Visible:true|Closed:true|TotalLength:0;
+Scene,Geometry/Cube1,51,52,1,0,1,0,Cube1,-53.5,11,-15.5,0,0,0,1,3,3,Physical,Entities,Default,Default|80/90/110/255,;
+Scene,None,52,106,1,0,0,0,TrainShake,-58,8,-7,0,0,0,1,1,1,None,Entities,Default,Default|255/255/255/255,Shake|Amplitude:0.3|Frequency:0.8|Intensity:1|Speed:0.1;
+Scene,Geometry/Cube1,53,52,1,0,1,0,Cube1,-62.5,9,-7,0,0,0,1,1,20,Physical,Entities,Default,Default|80/90/110/255,;
+Scene,Geometry/Cube1,54,52,1,0,1,0,Cube1,-62.5,11,-7,0,0,0,1,3,2,Physical,Entities,Default,Default|80/90/110/255,;
+Scene,Geometry/Cube1,55,52,1,0,1,0,Cube1,-62.5,13,-7,0,0,0,1,1,20,Physical,Entities,Default,Default|80/90/110/255,;
+Scene,Geometry/Cube1,56,52,1,0,1,0,Cube1,-62.5,11,1.5,0,0,0,1,3,3,Physical,Entities,Default,Default|80/90/110/255,;
+Scene,Geometry/Cube1,57,52,1,0,1,0,Cube1,-62.5,11,-15.5,0,0,0,1,3,3,Physical,Entities,Default,Default|80/90/110/255,;
+Scene,Geometry/Arc1,58,52,1,0,1,0,Arc1,-58,14.5,-7,0,90,270,2,40,5,Physical,Entities,Default,Default|0/0/0/255,;
+Scene,Geometry/Cube1,166,52,1,0,1,0,Cube1,-62.5,11,-11,0,0,0,1,3,6,Physical,Entities,Default,Transparent|255/255/255/255|Misc/Glass1|1/1|0/0,;
+Scene,None,106,0,1,0,0,0,Train,-58,8,-7,0,0,0,1,1,1,None,Entities,Default,Default|255/255/255/255,Train|WagonAId:137|WagonBId:219|WagonCount:20|WagonDistance:25|WagonID:137,PathFollower|SplineID:33|Active:true|Loop:true|Turn:true|PathPosition:60|Speed:40|RotationOffset:0/0/0;
+Scene,General/EditorHumanSpawnPoint,162,0,1,0,1,0,Human SpawnPoint,0,13,0,0,0,0,1,1,1,None,Entities,Default,Default|255/255/255/255,Tag|Name:HumanSpawnPoint;
+Scene,Geometry/Arc1,134,136,1,0,1,0,Arc1,-44,14.5,-7,0,90,270,2,40,5,Physical,Entities,Default,Default|0/0/0/255,;
+Scene,Geometry/Cube1,133,136,1,0,1,0,Cube1,-48.5,11,-15.5,0,0,0,1,5,3,Physical,Entities,Default,Default|80/80/80/255,;
+Scene,Geometry/Cube1,132,136,1,0,1,0,Cube1,-48.5,11,1.5,0,0,0,1,5,3,Physical,Entities,Default,Default|80/80/80/255,;
+Scene,Geometry/Cube1,131,136,1,0,1,0,Cube1,-48.5,13,-7,0,0,0,1,1,14,Physical,Entities,Default,Default|80/80/80/255,;
+Scene,None,137,0,0,0,0,0,WagonA,-44,8,-7,0,0,0,1,1,1,None,Entities,Default,Default|255/255/255/255,PathFollower|SplineID:33|PathPosition:0|Speed:0|Loop:true|Turn:true|RotationOffset:0/0/0;
+Scene,Geometry/Cube1,129,136,1,0,1,0,Cube1,-48.5,10.5,-7,0,0,0,1,4,14,Physical,Entities,Default,Transparent|255/255/255/255|Misc/Glass1|1/1|0/0,;
+Scene,Geometry/Cube1,128,136,1,0,1,0,Cube1,-39.5,11,-15.5,0,0,0,1,5,3,Physical,Entities,Default,Default|80/80/80/255,;
+Scene,Geometry/Cube1,127,136,1,0,1,0,Cube1,-39.5,11,1.5,0,0,0,1,5,3,Physical,Entities,Default,Default|80/80/80/255,;
+Scene,Geometry/Cube1,125,136,1,0,1,0,Cube1,-39.5,13,-7,0,0,0,1,1,14,Physical,Entities,Default,Default|80/80/80/255,;
+Scene,Geometry/Cube1,124,136,1,0,1,0,Cube1,-44,8,-7,0,0,0,10,1,20,Physical,Entities,Default,Default|0/0/0/255,;
+Scene,Geometry/Cube1,163,136,1,0,1,0,Cube1,-39.5,10.5,-7,0,0,0,1,4,14,Physical,Entities,Default,Transparent|255/255/255/255|Misc/Glass1|1/1|0/0,;
+Scene,Geometry/Hedron1a,138,0,1,1,0,0,path_3,-467,3,-375.5,0,0,0,10,10,10,None,Entities,Default,Default|255/0/255/255,;
+Scene,Geometry/Hedron1a,139,0,1,1,0,0,path_5,-843,3,30.5,0,0,0,10,10,10,None,Entities,Default,Default|255/0/255/255,;
+Scene,Geometry/Hedron1a,140,0,1,1,0,0,path_6,-529,3,487,0,0,0,10,10,10,None,Entities,Default,Default|255/0/255/255,;
+Scene,Geometry/Cube1,141,52,1,0,1,0,Cube1,-61,11,-16.5,0,0,0,2,5,1,Physical,Entities,Default,Default|80/90/110/255,;
+Scene,Geometry/Cube1,142,52,1,0,1,0,Cube1,-55,11,-16.5,0,0,0,2,5,1,Physical,Entities,Default,Default|80/90/110/255,;
+Scene,Geometry/Cube1,146,52,1,0,1,0,Cube1,-58,14,-16.5,0,0,0,8,1,1,Physical,Entities,Default,Default|0/0/0/255,;
+Scene,Geometry/Cube1,147,52,1,0,1,0,Cube1,-58,14.5,-16.5,0,0,0,6,1,1,Physical,Entities,Default,Default|0/0/0/255,;
+Scene,Geometry/Cube1,148,136,1,0,1,0,Cube1,-44,14,-16.5,0,0,0,8,1,1,Physical,Entities,Default,Default|0/0/0/255,;
+Scene,Geometry/Cube1,149,136,1,0,1,0,Cube1,-44,14.5,-16.5,0,0,0,6,1,1,Physical,Entities,Default,Default|0/0/0/255,;
+Scene,Geometry/Cube1,150,136,0,0,1,0,Cube1,-41,11,-16.5,0,0,0,2,5,1,Physical,Entities,Default,Default|80/80/80/255,;
+Scene,Geometry/Cube1,151,136,0,0,1,0,Cube1,-47,11,-16.5,0,0,0,2,5,1,Physical,Entities,Default,Default|80/80/80/255,;
+Scene,Geometry/GeoRamp1e,235,220,1,0,1,0,GeoRamp1e,-30,8,-22,0,270,90,1,8,6,Physical,Entities,Default,Default|0/0/0/255,;
+Scene,Geometry/Cube1,164,52,1,0,1,0,Cube1,-53.5,11,-3,0,0,0,1,3,6,Physical,Entities,Default,Transparent|255/255/255/255|Misc/Glass1|1/1|0/0,;
+Scene,Geometry/Cylinder1a,158,52,1,0,1,0,Cylinder1a,-58,8,3,0,0,0,10,1,10,Physical,Entities,Default,Default|0/0/0/255,;
+Scene,Geometry/Cube1,159,106,1,0,0,0,Container,-58,17,-8,0,0,0,8,18,35,Region,Characters,Default,Default|255/255/255/255,CharacterContainer|Humans:true|Titans:false|Shifters:false|Team:None|RotationsEnabled:true|RotateForward:true|RotateCamera:true|BlendVelocity:false|AdaptVelocity:true;
+Scene,Geometry/Cube1,160,137,1,0,0,0,Container,-44,17,-8.5,0,0,0,8,18,34,Region,Characters,Default,Default|255/255/255/255,CharacterContainer|Humans:true|Titans:false|Shifters:false|Team:None|RotationsEnabled:true|RotateForward:true|RotateCamera:true|BlendVelocity:false|AdaptVelocity:true;
+Scene,Geometry/Arc1,161,136,0,0,1,0,Arc1,-44,13,-16.5,0,90,270,2,1.9,2.5,Physical,Entities,Default,Default|80/80/80/255,;
+Scene,Geometry/Cube1,167,52,1,0,1,0,Cube1,-62.5,11,-3,0,0,0,1,3,6,Physical,Entities,Default,Transparent|255/255/255/255|Misc/Glass1|1/1|0/0,;
+Scene,Geometry/Cube1,177,52,1,0,1,0,Cube1,-58,8,5.5,0,0,0,10,1,5,Physical,Entities,Default,Default|0/0/0/255,;
+Scene,Geometry/Cylinder1a,178,52,1,0,1,0,Cylinder1a,-58,8,8,0,0,0,10,1,10,Physical,Entities,Default,Default|0/0/0/255,;
+Scene,Geometry/Arc1,188,136,0,0,1,0,Arc1,-44,13,-16.5,0,90,270,3,1.9,3,Physical,Entities,Default,Default|80/80/80/255,;
+Scene,Geometry/Cylinder1a,248,247,1,0,1,0,Cylinder1a,71.75,15.5,-12,0,0,0,40,15,40,Region,Entities,Default,Transparent|0/255/255/33|Misc/None|2/2|0.08/0.25,CharacterContainer|Humans:true|Titans:false|Shifters:false|RotationsEnabled:true|RotateForward:true|RotateCamera:true|AdaptVelocity:true;
+Scene,Geometry/Hedron1a,191,0,1,1,0,0,path_7,-96,3,165.5,0,0,0,10,10,10,None,Entities,Default,Default|255/0/255/255,;
+Scene,Geometry/Hedron1a,193,0,1,1,0,0,path_8,303,3,775,0,0,0,10,10,10,None,Entities,Default,Default|255/0/255/255,;
+Scene,Geometry/Hedron1a,249,0,1,1,0,0,path_9,-385,3,850,0,0,0,10,10,10,None,Entities,Default,Default|255/0/255/255,;
+Scene,Geometry/Arc1,232,220,1,0,1,0,Arc1,-30,14.5,-7,0,90,270,2,40,5,Physical,Entities,Default,Default|0/0/0/255,;
+Scene,None,220,219,1,0,0,0,WagonBShake,-29,8,-7,0,0,0,1,1,1,None,Entities,Default,Default|255/255/255/255,Shake|Amplitude:0.3|Frequency:0.8|Intensity:4|Speed:0.1;
+Scene,Geometry/Cube1,233,220,1,0,1,0,Cube1,-26,11,-16.5,0,0,0,2,5,1,Physical,Entities,Default,Default|80/80/80/255,;
+Scene,Geometry/Cube1,223,220,1,0,1,0,Cube1,-34,11,-16.5,0,0,0,2,5,1,Physical,Entities,Default,Default|80/80/80/255,;
+Scene,Geometry/Cube1,204,220,1,0,1,0,Cube1,-30,8,-7,0,0,0,10,1,20,Physical,Entities,Default,Default|0/0/0/255,;
+Scene,Geometry/Cube1,222,220,1,0,1,0,Cube1,-25.5,9,-7,0,0,0,1,1,18,Physical,Entities,Default,Default|80/80/80/255,;
+Scene,Geometry/Cube1,237,220,1,0,1,0,Cube1,-34.5,11,-7,0,0,0,1,3,18,Physical,Entities,Default,Transparent|255/255/255/255|Misc/Glass1|1/1|0/0,;
+Scene,Geometry/Cube1,239,220,1,0,1,0,Cube1,-25.5,11,-7,0,0,0,1,3,18,Physical,Entities,Default,Transparent|255/255/255/255|Misc/Glass1|1/1|0/0,;
+Scene,Geometry/Cube1,224,220,1,0,1,0,Cube1,-34.5,9,-7,0,0,0,1,1,18,Physical,Entities,Default,Default|80/80/80/255,;
+Scene,Geometry/Cube1,228,136,1,0,1,0,Cube1,-44,8,-19.5,0,0,0,6,1,5,Physical,Entities,Default,Default|0/0/0/255,;
+Scene,Geometry/GeoRamp1e,234,136,1,0,1,0,GeoRamp1e,-44,8,-22,0,270,90,1,8,6,Physical,Entities,Default,Default|0/0/0/255,;
+Scene,Geometry/Cube1,211,220,1,0,0,0,Container,-30,17,-8.5,0,0,0,8,18,34,Region,Characters,Default,Default|255/255/255/255,CharacterContainer|Humans:true|Titans:false|Shifters:false|Team:None|RotationsEnabled:true|RotateForward:true|RotateCamera:true|BlendVelocity:false|AdaptVelocity:true;
+Scene,Geometry/Cube1,226,220,1,0,1,0,Cube1,-26,11,2.5,0,0,0,2,5,1,Physical,Entities,Default,Default|80/80/80/255,;
+Scene,Geometry/Cube1,225,220,1,0,1,0,Cube1,-34,11,2.5,0,0,0,2,5,1,Physical,Entities,Default,Default|80/80/80/255,;
+Scene,Geometry/Cylinder1a,247,0,1,0,1,1,Cylinder1a,71.75,7.5,-12,0,0,0,40,1,40,Physical,Entities,Default,Basic|255/0/123/255|Misc/None|2/2|0.08/0.25,MovePingPong|RelativePositions:true|StartPosition:0/0/-100|EndPosition:0/0/100|Speed:200|PauseTime:0;
+Scene,Geometry/Cube1,227,220,1,0,1,0,Cube1,-30,8,-19.5,0,0,0,6,1,5,Physical,Entities,Default,Default|0/0/0/255,;
+Scene,Geometry/Cube1,229,52,1,0,1,0,Cube1,-58,8,-19.5,0,0,0,6,1,5,Physical,Entities,Default,Default|0/0/0/255,;
+Scene,Geometry/Cube1,231,220,1,0,1,0,Cube1,-25.5,13,-7,0,0,0,1,1,18,Physical,Entities,Default,Default|80/80/80/255,;
+Scene,Geometry/Cube1,230,220,1,0,1,0,Cube1,-34.5,13,-7,0,0,0,1,1,18,Physical,Entities,Default,Default|80/80/80/255,;
+Scene,None,219,0,0,0,0,0,WagonB,-30,8,-7,0,0,0,1,1,1,None,Entities,Default,Default|255/255/255/255,PathFollower|SplineID:33|PathPosition:0|Speed:0|Loop:true|Turn:true|RotationOffset:0/0/0;
+Scene,Geometry/Cylinder1a,244,241,1,0,1,0,Cylinder1a,45.25,15.5,-12,0,0,0,40,15,40,Region,Entities,Default,Transparent|0/255/255/33|Misc/None|2/2|0.08/0.25,CharacterContainer|Humans:true|Titans:false|Shifters:false|RotationsEnabled:true|RotateForward:true|RotateCamera:true
+/// Logic
+class Main
+{
+    function OnChatInput(message)
+    {
+        if (String.StartsWith(message, "time"))
+        {
+            scale = Convert.ToFloat(String.Substring(message, 5));
+            Time.TimeScale = scale;
+        }
+    }
+}
+
+extension CCManager
+{
+    Collisions = Dict(); # key: Character| value: List()
+
+    function Add(character, container)
+    {
+        if (!self.Collisions.Contains(character))
+        {
+            self.Collisions.Set(character, List());
+        }
+        
+        list = self.Collisions.Get(character);
+
+        if (!list.Contains(container))
+        {
+            list.Add(container);
+        }
+    }
+
+    function Remove(character, container)
+    {
+        if (self.Collisions.Contains(character))
+        {
+            list = self.Collisions.Get(character);
+        
+            if (list.Contains(container))
+            {
+                list.Remove(container);
+            }
+
+            if (list.Count == 0)
+            {
+                self.Collisions.Remove(character);
+            }
+        }
+    }
+
+    function GetColliderCount(character)
+    {
+        list = self.Collisions.Get(character);
+        return list.Count;
+    }
+}
+
+component CharacterContainer
+{
+    Humans = true;
+    Titans = false;
+    Shifters = false;
+    Team = "None";
+
+    RotationsEnabled = true;
+    RotateForward = true;
+    RotateCamera = true;
+    BlendVelocity = true;
+
+    RotationsEnabledTooltip = "Will rotate the character position along with the object";
+    RotateForwardTooltip = "Will rotate the direction of the character";
+    RotateCameraTooltip = "Will rotate the direction of the view";
+    BlendVelocityTooltip = "Will try to blend the velocity when a character enters or leaves collision. Might cause weirdness with overlapping containers";
+
+    _characters = List();
+    _lastPos = Vector3(0, 0, 0);
+    _lastRot = Quaternion(0, 0, 0, 0);
+    _fromToPosition = Vector3(0, 0, 0);
+    _fromToRotation = Quaternion(0, 0, 0, 0);
+
+    function Init()
+    {
+        self._lastPos = self.MapObject.Position;
+        self._lastRot = self.MapObject.QuaternionRotation;
+    }
+
+    function OnCollisionEnter(other)
+    {
+        if (other.IsCharacter)
+        {
+            if (other.Type == "Human" && !self.Humans)
+            {
+                return;
+            }
+            if (other.Type == "Titan" && !self.Titans)
+            {
+                return;
+            }
+            if (other.Type == "Shifter" && !self.Shifters)
+            {
+                return;
+            }
+            if (other.Team != self.Team && self.Team != "None")
+            {
+                return;
+            }
+
+            self._characters.Add(other);
+            CCManager.Add(other, self);
+
+            if (self.BlendVelocity)
+            {
+                count = CCManager.GetColliderCount(other);
+                other.AddForce(self._fromToPosition / (0-Time.TickTime), "VelocityChange");
+            }
+        }
+    }
+
+    function OnCollisionExit(other)
+    {
+        if (other.IsCharacter && self._characters.Contains(other))
+        {
+            if (self.BlendVelocity)
+            {
+                other.AddForce(self._fromToPosition / Time.TickTime, "VelocityChange");
+            }
+            
+            self._characters.Remove(other);
+            CCManager.Remove(other, self);
+        }
+    }
+
+
+    function OnTick()
+    {
+        self._fromToPosition = self.MapObject.Position - self._lastPos;
+        self._fromToRotation = self.MapObject.QuaternionRotation * Quaternion.Inverse(self._lastRot);
+
+        for (character in self._characters)
+        {
+            count = CCManager.GetColliderCount(character);
+            character.Position = character.Position + self._fromToPosition / count;
+            if (self.RotationsEnabled)
+            {
+                rotatedPos = VectorX.RotateAroundPoint(character.Position, self.MapObject.Position, self._fromToRotation);
+                character.Position = character.Position + (rotatedPos - character.Position) / count;
+
+                if (self.RotateForward)
+                {
+                    # character.TargetDirection is read only so there is no way to rotate it without it looking weird
+                }
+                if (self.RotateCamera && character.IsMine && character.IsMainCharacter)
+                {
+                    rot = Quaternion.Lerp(Quaternion.Identity, self._fromToRotation, 1.0/count);
+                    Camera.LookAt(Camera.Position + VectorX.Rotate(Camera.Forward, rot));
+                }
+            }
+        }
+
+        self._lastPos = self.MapObject.Position;
+        self._lastRot = self.MapObject.QuaternionRotation;
+    }
+}
+
+component Container
+{
+    Humans = true;
+    Titans = false;
+    Shifters = false;
+    Team = "None";
+
+    RotationsEnabled = true;
+    RotateForward = true;
+    RotateCamera = true;
+    BlendVelocity = true;
+
+    RotationsEnabledTooltip = "Will rotate the character position along with the object";
+    RotateForwardTooltip = "Will rotate the direction of the character";
+    RotateCameraTooltip = "Will rotate the direction of the view";
+    BlendVelocityTooltip = "Will try to blend the velocity when a character enters or leaves collision. Might cause weirdness with overlapping containers";
+
+    _characters = List();
+    _lastPos = Vector3(0, 0, 0);
+    _lastRot = Quaternion(0, 0, 0, 0);
+    _fromToPosition = Vector3(0, 0, 0);
+    _fromToRotation = Quaternion(0, 0, 0, 0);
+
+    function Init()
+    {
+        self._lastPos = self.MapObject.Position;
+        self._lastRot = self.MapObject.QuaternionRotation;
+    }
+
+    function OnCollisionEnter(other)
+    {
+        if (other.IsCharacter)
+        {
+            if (other.Type == "Human" && !self.Humans)
+            {
+                return;
+            }
+            if (other.Type == "Titan" && !self.Titans)
+            {
+                return;
+            }
+            if (other.Type == "Shifter" && !self.Shifters)
+            {
+                return;
+            }
+            if (other.Team != self.Team && self.Team != "None")
+            {
+                return;
+            }
+
+            self._characters.Add(other);
+            CCManager.Add(other, self);
+
+            if (self.BlendVelocity)
+            {
+                count = CCManager.GetColliderCount(other);
+                other.AddForce(self._fromToPosition / (0-Time.TickTime), "VelocityChange");
+            }
+        }
+    }
+
+    function OnCollisionExit(other)
+    {
+        if (other.IsCharacter && self._characters.Contains(other))
+        {
+            if (self.BlendVelocity)
+            {
+                other.AddForce(self._fromToPosition / Time.TickTime, "VelocityChange");
+            }
+            
+            self._characters.Remove(other);
+            CCManager.Remove(other, self);
+        }
+    }
+
+
+    function OnTick()
+    {
+        self._fromToPosition = self.MapObject.Position - self._lastPos;
+        self._fromToRotation = self.MapObject.QuaternionRotation * Quaternion.Inverse(self._lastRot);
+
+        for (character in self._characters)
+        {
+            character.Position = character.Position + self._fromToPosition;
+            if (self.RotationsEnabled)
+            {
+                rotatedPos = VectorX.RotateAroundPoint(character.Position, self.MapObject.Position, self._fromToRotation);
+                character.Position = character.Position + (rotatedPos - character.Position);
+
+                if (self.RotateForward)
+                {
+                    # character.TargetDirection is read only so there is no way to rotate it without it looking weird
+                }
+                if (self.RotateCamera && character.IsMine && character.IsMainCharacter)
+                {
+                    Camera.LookAt(Camera.Position + VectorX.Rotate(Camera.Forward, self._fromToRotation));
+                }
+            }
+        }
+
+        self._lastPos = self.MapObject.Position;
+        self._lastRot = self.MapObject.QuaternionRotation;
+    }
+}
+
+component Train
+{
+    WagonAId = 0;
+    WagonBId = 0;
+    WagonCount = 3;
+    WagonDistance = 25.0;
+    _wagons = List();
+    _pathFollower = null;
+    _characterContainer = null;
+
+    function Init()
+    {
+        self._pathFollower = self.MapObject.GetComponent("PathFollower");
+        self._characterContainer = self.MapObject.GetComponent("CharacterContainer");
+
+        originalA = Map.FindMapObjectByID(self.WagonAId);
+        originalB = Map.FindMapObjectByID(self.WagonBId);
+        
+        pos = 0;
+        for (i in Range(0, self.WagonCount, 1))
+        {
+            type = originalA;
+            if (Math.Mod(i+1, 4) == 0)
+            {
+                type = originalB;
+            }
+            copy = Map.CopyMapObject(type, true);
+            pf = copy.GetComponent("PathFollower");
+            pf.PathPosition = pos;
+            pf.Speed = self._pathFollower.Speed;
+
+            pos += 25;
+            copy.Active = true;
+            self._wagons.Add(pf);
+        }
+
+        self._pathFollower.PathPosition = pos;
+    }
+
+    function SendNetworkStream()
+    {
+        self.NetworkView.SendStream(self._pathFollower.PathPosition);
+    }
+
+    function OnNetworkStream()
+    {
+        self._pathFollower.PathPosition = self.NetworkView.ReceiveStream();
+    }
+}
+
+component Shake
+{
+    Amplitude = 1.0;
+    Frequency = 1.0;
+
+    _lastPos = Vector3(0, 0, 0);
+    _localPos = Vector3(0, 0, 0);
+    _offset = Vector3(0, 0, 0);
+
+    function Init()
+    {
+        self._lastPos = self.MapObject.Position;
+        self._localPos = self.MapObject.LocalPosition;
+        self._offset = Vector3(Random.RandomFloat(0.0, 1.0), 0, Random.RandomFloat(0.0, 1.0));
+    }
+
+    function OnTick()
+    {
+        Magnitude = 1.0;
+        t = Time.GameTime * self.Frequency;
+        px = Random.PerlinNoise(0.0, t + self._offset.X);
+        pz = Random.PerlinNoise(0.0, t + self._offset.Y);
+        shakeVector = Vector3(px - 0.5, 0.0, pz - 0.5) * 2;
+        
+        self._lastPos = self._localPos;
+        self.MapObject.Position = self.MapObject.Parent.Transform.TransformPoint(self._localPos) + shakeVector * self.Amplitude;
+    }
+}
+
+component Rotator 
+{
+    Speed = Vector3(0,0,0);
+    Local = false;
+
+    function OnTick()
+    {
+        if (self.Local == true)
+        {
+            self.MapObject.Transform.Rotate(self.Speed * Time.TickTime);
+        }
+        else
+        {
+            self.MapObject.Rotation = self.MapObject.Rotation + self.Speed * Time.TickTime;
+        }
+    }
+}
+
+component PathFollower
+{
+    SplineID = 0;
+    Active = true;
+    Loop = true;
+    Turn = true;
+    PathPosition = 0.0;
+    Speed = 1.0;
+    RotationOffset = Vector3(0,0,0);
+
+    _spline = null;
+
+    function Init()
+    {
+        obj = Map.FindMapObjectByID(self.SplineID);
+        if (obj != null)
+        {
+            spl = obj.GetComponent("Spline");
+            if (spl != null)
+            {
+                self._spline = spl;
+            }
+        }
+    }
+
+    function OnTick()
+    {
+        if (self._spline != null && self.Active)
+        {
+            oldPos = self.MapObject.Position;
+            
+            if (self.Loop)
+            {
+                self.PathPosition += self.Speed * Time.TickTime;
+                if (self.PathPosition >= self._spline._totalLength)
+                {
+                    self.PathPosition -= self._spline._totalLength;
+                }
+                if (self.PathPosition < 0)
+                {
+                    self.PathPosition += self._spline._totalLength;
+                }
+            }
+
+            self.MapObject.Position = self._spline.Evaluate(self.PathPosition);
+            if (self.Turn)
+            {
+                self.MapObject.Forward = self.MapObject.Position - oldPos;
+                self.MapObject.QuaternionRotation = self.MapObject.QuaternionRotation = Quaternion.FromEuler(self.RotationOffset);
+            }
+        }
+    }
+}
+
+component Spline
+{
+    NamePrefix = "Spline";
+    Resolution = 3;
+    Visible = false;
+    Closed = false;
+
+    _totalLength = 0.0;
+
+    _lineRenderer = null;
+
+    _points = List();
+    _segments = List();
+    _tangents = List();
+
+    function Init()
+    {
+        self.Resolution = Math.Clamp(self.Resolution, 1, 5);
+        next = true;
+        currentID = 0;
+        while (next)
+        {
+            point = Map.FindMapObjectByName(self.NamePrefix + "_" + currentID);
+            if (point != null)
+            {
+                self._points.Add(point.Position);
+                currentID += 1;
+            }
+            else
+            {
+                next = false;
+            }
+        }
+
+        self.CalculateTangents();
+
+        for (i in Range(0, self._points.Count - 1, 1))
+        {
+            segment = Curve3D(self._points.Get(i), self._tangents.Get(i), self._points.Get(i + 1), Vector3.Zero - self._tangents.Get(i + 1), self.Resolution);
+            self._totalLength += segment.TotalLength;
+            self._segments.Add(segment);
+        }
+        
+        if (self.Closed)
+        {
+            segment = Curve3D(self._points.Get(self._points.Count - 1), self._tangents.Get(self._points.Count - 1), self._points.Get(0), Vector3.Zero - self._tangents.Get(0), self.Resolution);
+            self._totalLength += segment.TotalLength;
+            self._segments.Add(segment);
+        }
+        
+        if (self.Visible)
+        {
+            self.CreateLR();
+        }
+    }
+
+    function CalculateTangents()
+    {
+        for (i in Range(0, self._points.Count, 1))
+        {
+            currPoint = self._points.Get(i);
+            tangent = Vector3(0,0,0);
+            if (self.Closed)
+            {
+                prevPoint = self._points.Get(Math.Mod(i - 1 + self._points.Count, self._points.Count));
+                nextPoint = self._points.Get(Math.Mod(i + 1, self._points.Count));
+            }
+            else
+            {
+                if (i == 0)
+                {
+                    prevPoint = currPoint;
+                    nextPoint = self._points.Get(i + 1);
+                }
+                elif (i == self._points.Count - 1)
+                {
+                    prevPoint = self._points.Get(i - 1);
+                    nextPoint = currPoint;
+                }
+                else
+                {
+                    prevPoint = self._points.Get(i - 1);
+                    nextPoint = self._points.Get(i + 1);
+                }
+            }
+
+            distancePrev = (currPoint - prevPoint).Magnitude;
+            distanceNext = (nextPoint - currPoint).Magnitude;
+            tangent = ((nextPoint - prevPoint) * 0.5).Normalized * Math.Min(distancePrev, distanceNext) * 0.5;
+
+            self._tangents.Add(tangent);
+        }
+    }
+
+    function Evaluate(t)
+    {
+        distance = t;
+        accumulatedLength = 0.0;
+
+        for (i in Range(0, self._segments.Count, 1))
+        {
+            segment = self._segments.Get(i);
+            if (accumulatedLength + segment.TotalLength >= distance)
+            {
+                localT = distance - accumulatedLength;
+                return segment.Evaluate(localT);
+            }
+            accumulatedLength += segment.TotalLength;
+        }
+        
+        return self._points.Get(self._points.Count-1);
+    }
+
+    function EvaluateNormalized(t)
+    {
+        return self.Evaluate(t * self._totalLength);
+    }
+    
+    function CreateLR()
+    {
+        if (self._lineRenderer == null)
+        {
+            self._lineRenderer = LineRenderer.CreateLineRenderer();
+            self._lineRenderer.LineColor = Color(0,255,255,255);
+            self._lineRenderer.PositionCount = 0;
+        }
+
+        c = self._points.Count * 15;
+        self._lineRenderer.PositionCount = c;
+
+        for (i in Range(0, c, 1))
+        {
+            t = i / (c - 1.0);
+            self._lineRenderer.SetPosition(i, self.EvaluateNormalized(t));
+        }
+
+        self._lineRenderer.Enabled = true;
+    }
+}
+
+class Curve3D
+{
+    P1 = Vector3.Zero;
+    P2 = Vector3.Zero;
+    T1 = Vector3.Zero;
+    T2 = Vector3.Zero;
+    _lengths = List();
+    TotalLength = 0.0;
+    Resolution = 0;
+
+    function Init(P1, T1, P2, T2, Resolution)
+    {
+        self.P1 = P1;
+        self.P2 = P2;
+        self.T1 = P1+T1;
+        self.T2 = P2+T2;
+        self.Resolution = Resolution;
+
+        self.CalculateLengths();
+    }
+
+    # 0.0 - TotalLength
+    function Evaluate(t)
+    {
+        remappedT = self.Remap(t);
+        return self.EvaluateRaw(remappedT);
+    }
+
+    # 0.0 - 1.0
+    function EvaluateNormalized(t)
+    {
+        remappedT = self.Remap(t * self.TotalLength);
+        return self.EvaluateRaw(remappedT);
+    }
+
+    # 0.0 - 1.0
+    function EvaluateRaw(t)
+    {
+        t = Math.Clamp(t, 0.0, 1.0);
+        a1 = Vector3.Lerp(self.P1, self.T1, t);
+        a2 = Vector3.Lerp(self.T1, self.T2, t);
+        a3 = Vector3.Lerp(self.T2, self.P2, t);
+        b1 = Vector3.Lerp(a1, a2, t);
+        b2 = Vector3.Lerp(a2, a3, t);
+        d = Vector3.Lerp(b1, b2, t);
+        return d;
+    }
+
+    function Remap(distance)
+    {
+        distance = Math.Max(0, Math.Min(distance, self.TotalLength));
+
+        for (i in Range(1, self._lengths.Count, 1))
+        {
+            prevLength = self._lengths.Get(i - 1);
+            currLength = self._lengths.Get(i);
+
+            if (distance <= currLength)
+            {
+                prevT = (i - 1) / (self._lengths.Count - 1.0);
+                nextT = i / (self._lengths.Count - 1.0);       
+
+                lerpFactor = (distance - prevLength) / (currLength - prevLength);
+
+                return prevT + lerpFactor * (nextT - prevT);
+            }
+        }
+
+        return 1.0;
+    }
+
+    function CalculateLengths()
+    {
+        sampleCount = Math.Max(self.Resolution * 10, 2);
+        current = self.EvaluateRaw(0.0);
+        self.TotalLength = 0.0;
+        self._lengths.Clear();
+        self._lengths.Add(0.0); 
+
+        for (i in Range(1, sampleCount, 1))
+        {
+            t = i / (sampleCount - 1.0); 
+            nextPoint = self.EvaluateRaw(t);
+            diff = (nextPoint - current).Magnitude;
+            self.TotalLength += diff;
+            self._lengths.Add(self.TotalLength);
+            current = nextPoint;
+        }
+    }
+}
+
+extension VectorX
+{
+   
+    function Rotate(v, q)
+    {
+        qVec = Vector3(q.X, q.Y, q.Z);
+        cross1 = Vector3.Cross(qVec, v);
+        cross2 = Vector3.Cross(qVec, cross1);
+
+        rotatedVector = v + 2 * q.W * cross1 + 2 * cross2;
+        return rotatedVector;
+    }
+
+    function RotateAroundPoint(P1, P2, q)
+    {
+        v = P1 - P2;
+        v = self.Rotate(v, q);
+        v = P2 + v;
+        return v;
+    }
+}
+/// Weather
+{
+    "Skybox" : "Day1",
+    "SkyboxColor" : [
+        128,
+        128,
+        128,
+        255
+    ],
+    "Daylight" : [
+        255,
+        255,
+        255,
+        255
+    ],
+    "DaylightIntensity" : 1,
+    "DaylightDirection" : [
+        45,
+        45,
+        0
+    ],
+    "AmbientLight" : [
+        126,
+        122,
+        114,
+        255
+    ],
+    "Flashlight" : [
+        255,
+        255,
+        255,
+        0
+    ],
+    "FogDensity" : 0,
+    "FogColor" : [
+        128,
+        128,
+        128,
+        255
+    ],
+    "Rain" : 0,
+    "Thunder" : 0,
+    "Snow" : 0,
+    "Wind" : 0,
+    "WindDirection" : [
+        1,
+        0,
+        0
+    ],
+    "RainForce" : 0,
+    "SnowForce" : 0,
+    "WindForce" : 0,
+    "UseSchedule" : false,
+    "ScheduleLoop" : false,
+    "Schedule" : "",
+    "Name" : "Set 1",
+    "Preset" : false
+}
