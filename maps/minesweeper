@@ -1,0 +1,433 @@
+/// Options
+EditorVersion:1.0|Description:|HasWeather:0
+/// CustomAssets
+
+/// Objects
+Scene,Geometry/Cuboid,0,0,1,1,1,0,Unnamed,0,-25,0,0,0,0,100,5,100,Physical,Entities,Default,Basic|255/255/255/255|Misc/Dev1|25/25|0/0,;
+Scene,General/EditorDaylight,1,0,1,1,0,0,Daylight,0,56,0,53.13011,126.8699,0,1,1,1,None,Entities,Default,DefaultNoTint|255/255/255/255,Daylight|Color:255/255/255/255|Intensity:1|WeatherControlled:true;
+Scene,General/HumanReference,2,0,1,1,1,0,Human Reference,10.83333,6.5,-3,0,0,0,1,1,1,None,Entities,Default,Default|255/255/255/255,;
+Scene,None,3,0,1,1,1,0,CELL_A,6,-65.5,0,0,0,0,1,1,1,None,Entities,Default,Default|255/255/255/255,;
+Scene,Geometry/Cube1,4,0,1,1,0,0,BARRIER,6,-64,-6,0,0,0,1,1,1,Physical,Entities,Default,Basic|255/255/255/255|Stone/Stone16|0.33333/0.33333|0/0,;
+Scene,Geometry/Cube1,5,3,1,1,1,0,CELL_A_1,6,-63.5,0,0,0,0,10,4,10,None,Entities,Default,Basic|255/255/255/255|Nature/Grass2|0.4/0.4|0/0,;
+Scene,None,6,0,1,0,1,0,CELL_B,-4.5,-65.5,0,0,0,0,1,1,1,None,Entities,Default,Default|255/255/255/255,;
+Scene,Geometry/Cube1,8,6,1,1,1,0,CELL_B_1,-4.5,-63.5,0,0,0,0,10,4,10,None,Entities,Default,Basic|255/255/255/255|Nature/Grass2|0.4/0.4|0/0,;
+Scene,Nature/LogFence3,9,6,1,1,1,0,CELL_B_2,-4.5,-61.5,0,0,0,0,0.05,0.15,0.05,None,Entities,Default,Default|255/255/255/255,;
+Scene,FX/WavingFlag1c,10,6,1,0,1,0,CELL_B_3,-6,-57.5,0,0,0,0,0.3,0.3,0.3,None,Entities,Default,DefaultNoTint|255/255/255/255,;
+Scene,None,11,0,1,1,1,0,CELL_C,-15,-65.5,0,0,0,0,1,1,1,None,Entities,Default,Default|255/255/255/255,;
+Scene,Geometry/Cube1,13,11,1,1,1,0,CELL_C_1,-15,-63.5,0,0,0,0,10,3,10,None,Entities,Default,Basic|255/255/255/255|Nature/Grass1|0.5/0.5|0/0,;
+Scene,None,14,0,1,1,1,0,CELL_D,-25.5,-65.5,0,0,0,0,1,1,1,None,Entities,Default,Default|255/255/255/255,;
+Scene,Geometry/GeoPit1k,16,14,1,1,1,0,CELL_D_1,-25.5,-62.5,0,0,0,0,10,9,10,None,Entities,Default,Basic|255/255/255/255|Stone/Stone16|-0.33333/0.33333|0/0,;
+Scene,Geometry/Plane1a,17,14,1,1,1,0,CELL_D_2,-25.5,-63.5,0,0,0,0,10,1,10,None,Entities,Default,Basic|255/255/255/255|Nature/Dirt1|1/1|0/0,;
+Scene,Geometry/Hedron1,26,0,1,0,1,0,SPHERE,6,-60,6,0,0,0,1,1,1,None,Characters,Default,Transparent|255/255/255/0|Misc/None|1/1|0/0,Counter|Radius:15|Time:0.3
+/// Logic
+class Main
+{
+    Width = 16;
+    Length = 16;
+    MineCount = 40;
+    _scale = Vector3(10, 0, 10);
+    _offset = Vector3(5, 0, 5);
+
+    _allCells = List();
+    _hiddencells = List();
+    _minecells = List();
+    
+    # cache
+    _cell_A = null;
+    _cell_B = null;
+    _cell_C = null;
+    _cell_D = null;
+    _barrier = null;   
+    _sphere = null;
+    _sphereColors = List();
+
+    function Init()
+    {
+        self.Width = Math.Max(1, self.Width);
+        self.Length = Math.Max(1, self.Length);
+        self.MineCount = Math.Clamp(self.MineCount, 1, self.Width * self.Length);
+
+        self._cell_A = Map.FindMapObjectByName("CELL_A");
+        self._cell_B = Map.FindMapObjectByName("CELL_B");
+        self._cell_C = Map.FindMapObjectByName("CELL_C");
+        self._cell_D = Map.FindMapObjectByName("CELL_D");
+        self._sphere = Map.FindMapObjectByName("SPHERE");
+        self._barrier = Map.FindMapObjectByName("BARRIER");
+        self._sphereColors.Add(Color(255, 255, 255, 0));
+        self._sphereColors.Add(Color(0, 0, 255, 255));
+        self._sphereColors.Add(Color(0, 127, 0, 255));
+        self._sphereColors.Add(Color(255, 0, 0, 255));
+        self._sphereColors.Add(Color(0, 0, 127, 255));
+        self._sphereColors.Add(Color(127, 0, 0, 255));
+        self._sphereColors.Add(Color(0, 127, 127, 255));
+        self._sphereColors.Add(Color(127, 0, 127, 255));
+        self._sphereColors.Add(Color(127, 127, 127, 255));
+        self._sphereColors.Add(Color(255, 0, 127, 255));
+
+        UI.CreatePopup("boardoptions", "Options", 250, 350);
+        UI.AddPopupButton("boardoptions", "bo_new", "New Board");
+        UI.AddPopupButton("boardoptions", "bo_reveal", "Reveal All");
+    }
+
+    function OnGameStart()
+    {
+        self.CreateBoard();
+        UI.SetLabel("BottomRight", "Reveal cell: " + Input.GetKeyName("Interaction/Interact") + "." + String.Newline + "Flag cell: " + Input.GetKeyName("Interaction/Interact2") + ".");
+    }
+
+    function OnFrame()
+    {
+        if (Network.MyPlayer.Status == "Alive")
+        {
+            character = Network.MyPlayer.Character;
+
+            if (Input.GetKeyDown("Interaction/Interact"))
+            {
+                cell = self.GetCellInPosition(character.Position);
+                self.RevealCell(cell);
+            }
+
+            if (Input.GetKeyDown("Interaction/Interact2"))
+            {
+                cell = self.GetCellInPosition(character.Position);
+                cell.SetFlag(!cell.Flag);
+            }
+        }
+        if (Network.IsMasterClient Input.GetKeyDown("Interaction/Interact3"))
+        {
+            UI.ShowPopup("boardoptions");
+        }
+    }
+
+    function OnButtonClick(buttonName)
+    {
+        if (buttonName == "bo_new")
+        {
+            self.CreateBoard();
+        }   
+        elif (buttonName == "bo_reveal")
+        {
+            for(cell in self._hiddencells)
+            {
+                cell.SetHidden(false);
+            }
+        }        
+    }
+
+    function GetCellInPosition(pos)
+    {
+        getX = Math.Floor(Math.Clamp((pos.X - self._offset.X + self._scale.X / 2) / self._scale.X, 0, self.Width - 1));
+        getZ = Math.Floor(Math.Clamp((pos.Z - self._offset.Z + self._scale.Z / 2) / self._scale.Z, 0, self.Length - 1));
+        
+        return self.GetCellAt(getX, getZ);
+    }
+
+    function GetCellAt(x, z)
+    {
+        return self._allCells.Get(x).Get(z);
+    }
+    
+    function InBounds(x, z)
+    {
+        return x >= 0 && x < self.Width && z >= 0 && z < self.Length;
+    }
+
+    function CreateBoard()
+    {
+        temp = List();
+        self._allCells.Clear();
+        self._hiddencells.Clear();
+        self._minecells.Clear();
+
+        # initialize the array
+        for(i in Range(0, self.Width, 1))
+        {
+            column = List();
+            for(j in Range(0, self.Length, 1))
+            {
+                newC = Cell(i, j, Vector3(i*self._scale.X + self._offset.X, 0, j*self._scale.Z + self._offset.Z));
+                column.Add(newC);
+                temp.Add(newC);
+                self._hiddencells.Add(newC);
+            }
+            self._allCells.Add(column);
+        }
+
+        # mines
+        for(i in Range(0, self.MineCount, 1))
+        {
+            rand = Random.RandomInt(0,temp.Count);
+            cell = temp.Get(rand);
+            cell.Mine = true;
+            self._minecells.Add(cell);
+            
+            # iterate through the adjacent cells and add +1 mine to each of them
+            for(i in Range(0-1, 2, 1))
+            {
+                for(j in Range(0-1, 2, 1))
+                {
+                    #Game.Print(i + ", " + j);
+                    if ((i != 0 || j != 0) && self.InBounds(cell._x + i, cell._z + j))
+                    {   
+                        newCell = self.GetCellAt(cell._x + i, cell._z + j);
+                        newCell.AdjacentMines += 1;
+                        newCell.UpdateCounter();
+                        # if the cell is horizontally or vertically adjacent
+                        if (i == 0 || j == 0)
+                        {
+                            newCell._ortMines = true;
+                        }
+                    }
+                }   
+            }
+            temp.RemoveAt(rand);
+        }
+        
+        self._barrier.Scale = Vector3(self._scale.X * self.Width, 5, self._scale.Z * self.Length);
+        self._barrier.Position = Vector3((self._barrier.Scale.X / 2) - (self._scale.X / 2), 2.5, (self._barrier.Scale.Z / 2) - (self._scale.Z / 2)) + self._offset;
+    }
+
+    function RevealCell(cell)
+    {
+        if (cell == null || cell.Flag == true || cell.Hidden == false)
+        {
+            return;
+        }
+
+        cell.SetHidden(false);
+        self._hiddencells.Remove(cell);
+        
+        if (cell.Mine == true)
+        {
+            self.EndGame(false);
+            return;
+        }
+
+
+        if (cell._ortMines == false)
+        {
+            if (self.InBounds(cell._x+1, cell._z) == true)
+            {
+                self.RevealCell(self.GetCellAt(cell._x+1, cell._z));
+            }
+            if (self.InBounds(cell._x-1, cell._z) == true)
+            {
+                self.RevealCell(self.GetCellAt(cell._x-1, cell._z));
+            }
+            if (self.InBounds(cell._x, cell._z+1) == true)
+            {
+                self.RevealCell(self.GetCellAt(cell._x, cell._z+1));
+            }
+            if (self.InBounds(cell._x, cell._z-1) == true)
+            {
+                self.RevealCell(self.GetCellAt(cell._x, cell._z-1));
+            }
+        }
+    }
+
+    coroutine RevealMines()
+    {
+        for(cell in self._minecells)
+        {
+            cell.SetHidden(false);
+        }
+    }
+
+    function EndGame(win)
+    {
+        if (win)
+        {
+            UI.SetLabel("MiddleCenter", "Game win");
+        }
+        else
+        {
+            self.RevealMines();
+            UI.SetLabel("MiddleCenter", "Game lose");
+        }
+
+        Game.End(10);
+    }
+}
+
+class Cell
+{
+    AdjacentMines = 0;
+    Hidden = true;
+    Mine = false;
+    Flag = false;
+    _ortMines = false;
+    _x = 0;
+    _z = 0;
+
+    _counter = null;
+    _gameObject = null;
+    _position = Vector3.Zero;
+    
+    function Init(x, z, pos)
+    {
+        self._x = x;
+        self._z = z;
+        self._position = pos;
+        self.UpdateObject();
+        
+        self._counter = Map.CopyMapObject(Main._sphere, false);
+        self._counter.Position = self._gameObject.Position + Vector3.Up * 2;
+        self._counter.GetComponent("Counter")._startPos = self._counter.Position;
+    }
+
+    function SetHidden(enabled)
+    {
+        self.Hidden = enabled;
+        self.UpdateObject();
+    }
+
+    function SetFlag(enabled)
+    {
+        self.Flag = enabled;
+        self.UpdateObject();
+    }
+
+    function UpdateObject()
+    {
+        if (self._gameObject != null)
+        {
+            for(c in self._gameObject.GetChildren())
+            {
+                Map.DestroyMapObject(c, false);
+            }
+            Map.DestroyMapObject(self._gameObject, true);
+        }
+        
+        newVisual = null;
+
+        if (self.Hidden == true)
+        {
+            if (self.Flag == true)
+            {
+                newVisual = Main._cell_B;
+            }
+            else
+            {
+                newVisual = Main._cell_A;
+            }
+        }
+        else
+        {
+            if (self.Mine == true)
+            {
+                newVisual = Main._cell_D;
+            }
+            else
+            {
+                newVisual = Main._cell_C;
+            }
+        }
+        self._gameObject = Map.CopyMapObject(newVisual, true);
+        self._gameObject.Position = self._position;
+    }
+
+    function UpdateCounter()
+    {
+        self._counter.Color = Main._sphereColors.Get(self.AdjacentMines);
+    }
+}
+
+component Counter
+{
+    Radius = 10.0;
+    Time = 1.0;
+    _startPos = Vector3.Zero;
+
+    function Init()
+    {
+        self._startPos = self.MapObject.Position;
+        self.MapObject.AddSphereCollider("Region", "Characters", Vector3.Zero, self.Radius);
+    }
+
+    function OnCollisionEnter(other)
+    {
+        if (other == Network.MyPlayer.Character)
+        {
+            self.MoveTo(self._startPos + Vector3.Up * 4);
+        }
+    }
+
+    function OnCollisionExit(other)
+    {
+        if (other == Network.MyPlayer.Character)
+        {
+            self.MoveTo(self._startPos);
+        }
+    }
+
+    coroutine MoveTo(pos)
+    {
+        startPos = self.MapObject.Position;
+
+        t = 0.0;
+        while (t < self.Time)
+        {
+            self.MapObject.Position = Vector3.Lerp(startPos, pos, t / self.Time);
+            t += Time.FrameTime;
+        }
+        self.MapObject.Position = pos;
+    }
+}
+/// Weather
+{
+    "Skybox" : "Day1",
+    "SkyboxColor" : [
+        128,
+        128,
+        128,
+        255
+    ],
+    "Daylight" : [
+        255,
+        255,
+        255,
+        255
+    ],
+    "DaylightIntensity" : 1,
+    "DaylightDirection" : [
+        45,
+        45,
+        0
+    ],
+    "AmbientLight" : [
+        126,
+        122,
+        114,
+        255
+    ],
+    "Flashlight" : [
+        255,
+        255,
+        255,
+        0
+    ],
+    "FogDensity" : 0,
+    "FogColor" : [
+        128,
+        128,
+        128,
+        255
+    ],
+    "Rain" : 0,
+    "Thunder" : 0,
+    "Snow" : 0,
+    "Wind" : 0,
+    "WindDirection" : [
+        1,
+        0,
+        0
+    ],
+    "RainForce" : 0,
+    "SnowForce" : 0,
+    "WindForce" : 0,
+    "UseSchedule" : false,
+    "ScheduleLoop" : false,
+    "Schedule" : "",
+    "Name" : "Set 1",
+    "Preset" : false
+}
