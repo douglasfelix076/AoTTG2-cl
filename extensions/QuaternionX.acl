@@ -1,9 +1,0 @@
-extension QuaternionX
-{
-    function LookRotationY(forward, up)
-    {
-        ztoup = Quaternion.LookRotation(up, forward * 0-1);
-        ytoz = Quaternion.FromEuler(Vector3(90, 0, 0));
-        return ztoup * ytoz;
-    }
-}
